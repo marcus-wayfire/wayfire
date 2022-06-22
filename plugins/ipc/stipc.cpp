@@ -120,6 +120,7 @@ class headless_input_backend_t
         ev.state     = state;
         ev.time_msec = get_current_time();
         wl_signal_emit(&pointer->pointer->events.button, &ev);
+        wl_signal_emit(&pointer->pointer->events.frame, NULL);
     }
 
     void do_motion(double x, double y)
@@ -133,6 +134,7 @@ class headless_input_backend_t
         ev.x = 1.0 * (x - box->x) / box->width;
         ev.y = 1.0 * (y - box->y) / box->height;
         wl_signal_emit(&pointer->pointer->events.motion_absolute, &ev);
+        wl_signal_emit(&pointer->pointer->events.frame, NULL);
     }
 
     headless_input_backend_t(const headless_input_backend_t&) = delete;

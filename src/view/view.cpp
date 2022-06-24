@@ -1387,3 +1387,37 @@ wf::scene::iteration wf::scene::view_node_t::visit(visitor_t *visitor)
     visitor->view_node(this);
     return iteration::SKIP_CHILDREN;
 }
+
+int wf::scene::view_node_t::flags() const
+{
+    if (wf::get_core_impl().seat->keyboard_focus == view)
+    {
+        return (int)node_flags::ACTIVE_KEYBOARD;
+    }
+
+    return 0;
+}
+
+/**
+ * An interface for scene nodes which interact with the keyboard.
+ */
+class view_keyboard_interaction_t : public wf::keyboard_interaction_t
+{
+  public:
+    void handle_keyboard_enter() override
+    {}
+
+    void handle_keyboard_leave() override
+    {}
+
+    wf::keyboard_action handle_keyboard_key(wlr_event_keyboard_key event) override
+    {
+        return wf::keyboard_action::CONSUME;
+    }
+};
+
+wf::keyboard_interaction_t& wf::scene::view_node_t::keyboard_interaction()
+{
+    static keyboard_interaction_t noop;
+    return noop;
+}

@@ -577,7 +577,7 @@ namespace scene
  * removed from it). Instead, plugins should reorder/move the view's parent node,
  * therefore ensuring that each view moves together with its children.
  */
-class view_node_t : public scene::node_t, std::enable_shared_from_this<view_node_t>
+class view_node_t final : public scene::node_t, std::enable_shared_from_this<view_node_t>
 {
   public:
     view_node_t(wayfire_view view);
@@ -589,6 +589,9 @@ class view_node_t : public scene::node_t, std::enable_shared_from_this<view_node
     {
         return view;
     }
+
+    int flags() const override;
+    keyboard_interaction_t& keyboard_interaction() final;
 
   private:
     wayfire_view view;

@@ -7,6 +7,7 @@
 #include <wayfire/geometry.hpp>
 #include <wayfire/region.hpp>
 #include <wayfire/nonstd/observer_ptr.h>
+#include <wayfire/scene-input.hpp>
 
 namespace wf
 {
@@ -95,6 +96,22 @@ enum class iteration
 };
 
 /**
+ * Describes the current state of a node.
+ */
+enum class node_flags : int
+{
+    /**
+     * If set, the node should receive keyboard events.
+     *
+     * Once a node sets this flag and the root is updated, it will receive a
+     * keyboard_enter event.
+     * If the flag is cleared after being set, the node will receive a
+     * keyboard_leave event.
+     */
+    ACTIVE_KEYBOARD = (1 << 0),
+};
+
+/**
  * Used as a result of an intersection of the scenegraph with the user input.
  */
 struct input_node_t
@@ -126,6 +143,24 @@ class node_t
      * First visit the node and then its children from front to back.
      */
     virtual iteration visit(visitor_t *visitor) = 0;
+
+    /**
+     * Get the current flags of the node.
+     */
+    virtual int flags() const
+    {
+        return 0;
+    }
+
+    /**
+     * Get the keyboard interaction interface of this node.
+     * By default, a no-op.
+     */
+    virtual keyboard_interaction_t& keyboard_interaction()
+    {
+        static keyboard_interaction_t noop;
+        return noop;
+    }
 
     /**
      * Structure nodes are special nodes which core usually creates when Wayfire

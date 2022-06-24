@@ -4,7 +4,6 @@
 
 namespace wf
 {
-
 /**
  * After a node receives keyboard input, it can decide whether input should
  * be propagated to other nodes or not.
@@ -13,7 +12,6 @@ enum class keyboard_action
 {
     /** Do not propagate events further, current node consumed the event. */
     CONSUME,
-
     /** Propagate to other nodes which want the keyboard events. */
     PROPAGATE,
 };

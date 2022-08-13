@@ -811,7 +811,7 @@ class output_viewport_manager_t
             }
         }
 
-        for (auto& [v, old_workspace] : old_fixed_view_workspaces)
+        for (auto& [v, old_workspace] : wf::reverse(old_fixed_view_workspaces))
         {
             wf::view_change_workspace_signal vdata;
             vdata.view = v;

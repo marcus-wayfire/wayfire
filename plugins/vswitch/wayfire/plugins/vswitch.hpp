@@ -83,13 +83,7 @@ class workspace_switch_t
         animation.dy.set(animation.dy + cws.y - workspace.y, 0);
         animation.start();
 
-        std::vector<wayfire_view> fixed_views;
-        if (overlay_view)
-        {
-            fixed_views.push_back(overlay_view);
-        }
-
-        output->workspace->set_workspace(workspace, fixed_views);
+        output->workspace->set_workspace(workspace, overlay_views);
     }
 
     /**
@@ -103,35 +97,21 @@ class workspace_switch_t
      * @param view The desired overlay view, or NULL if the overlay view needs
      *   to be unset.
      */
-    virtual void set_overlay_view(wayfire_view view)
+    virtual void set_overlay_view(std::vector<wayfire_view> views)
     {
-        if (this->overlay_view == view)
+        /* Set views */
+        overlay_views = views;
+        for (auto& view : overlay_views)
         {
-            /* Nothing to do */
-            return;
-        }
+            if (view && (view->role != wf::VIEW_ROLE_TOPLEVEL))
+            {
+                continue;
+            }
 
-        /* Reset old view */
-        if (this->overlay_view)
-        {
-            overlay_view->set_visible(true);
-            overlay_view->pop_transformer(vswitch_view_transformer_name);
-        }
-
-        /* Set new view */
-        this->overlay_view = view;
-        if (view)
-        {
             view->add_transformer(std::make_unique<wf::view_2D>(view),
                 vswitch_view_transformer_name);
             view->set_visible(false); // view is rendered as overlay
         }
-    }
-
-    /** @return the current overlay view, might be NULL. */
-    virtual wayfire_view get_overlay_view()
-    {
-        return this->overlay_view;
     }
 
     /**
@@ -162,6 +142,8 @@ class workspace_switch_t
     virtual ~workspace_switch_t()
     {}
 
+    std::vector<wayfire_view> overlay_views;
+
   protected:
     option_wrapper_t<int> gap{"vswitch/gap"};
     option_wrapper_t<color_t> background_color{"vswitch/background"};
@@ -171,7 +153,6 @@ class workspace_switch_t
     std::unique_ptr<workspace_wall_t> wall;
 
     const std::string vswitch_view_transformer_name = "vswitch-transformer";
-    wayfire_view overlay_view;
 
     bool running = false;
     wf::signal_connection_t on_frame = [=] (wf::signal_data_t *data)
@@ -179,36 +160,46 @@ class workspace_switch_t
         render_frame(static_cast<wall_frame_event_t*>(data)->target);
     };
 
-    virtual void render_overlay_view(const framebuffer_t& fb)
+    virtual void render_overlay_views(const framebuffer_t& fb)
     {
-        if (!overlay_view)
+        auto views = output->workspace->get_views_in_layer(MIDDLE_LAYERS);
+        for (auto& view : wf::reverse(views))
         {
-            return;
-        }
+            const auto is_fixed = std::find(overlay_views.cbegin(),
+                overlay_views.cend(), view) != overlay_views.end();
 
-        double progress = animation.progress();
-        auto tr = dynamic_cast<wf::view_2D*>(overlay_view->get_transformer(
-            vswitch_view_transformer_name).get());
+            if (is_fixed)
+            {
+                double progress = animation.progress();
+                auto tr = dynamic_cast<wf::view_2D*>(view->get_transformer(
+                    vswitch_view_transformer_name).get());
+                if (!tr)
+                {
+                    break;
+                }
 
-        static constexpr double smoothing_in     = 0.4;
-        static constexpr double smoothing_out    = 0.2;
-        static constexpr double smoothing_amount = 0.5;
+                static constexpr double smoothing_in     = 0.4;
+                static constexpr double smoothing_out    = 0.2;
+                static constexpr double smoothing_amount = 0.5;
 
-        if (progress <= smoothing_in)
-        {
-            tr->alpha = 1.0 - (smoothing_amount / smoothing_in) * progress;
-        } else if (progress >= 1.0 - smoothing_out)
-        {
-            tr->alpha = 1.0 - (smoothing_amount / smoothing_out) * (1.0 - progress);
-        } else
-        {
-            tr->alpha = smoothing_amount;
-        }
+                if (progress <= smoothing_in)
+                {
+                    tr->alpha = 1.0 - (smoothing_amount / smoothing_in) * progress;
+                } else if (progress >= 1.0 - smoothing_out)
+                {
+                    tr->alpha = 1.0 - (smoothing_amount / smoothing_out) *
+                        (1.0 - progress);
+                } else
+                {
+                    tr->alpha = smoothing_amount;
+                }
 
-        auto all_views = overlay_view->enumerate_views();
-        for (auto v : wf::reverse(all_views))
-        {
-            v->render_transformed(fb, fb.geometry);
+                auto all_views = view->enumerate_views();
+                for (auto v : wf::reverse(all_views))
+                {
+                    v->render_transformed(fb, fb.geometry);
+                }
+            }
         }
     }
 
@@ -225,7 +216,7 @@ class workspace_switch_t
         };
         wall->set_viewport(viewport);
 
-        render_overlay_view(fb);
+        render_overlay_views(fb);
         output->render->schedule_redraw();
 
         if (!animation.running())
@@ -240,18 +231,18 @@ class workspace_switch_t
      */
     virtual void adjust_overlay_view_switch_done(wf::point_t old_workspace)
     {
-        if (!overlay_view)
+        for (auto overlay_view : overlay_views)
         {
-            return;
+            wf::view_change_workspace_signal data;
+            data.view = overlay_view;
+            data.from = old_workspace;
+            data.to   = output->workspace->get_current_workspace();
+            output->emit_signal("view-change-workspace", &data);
+            overlay_view->set_visible(true);
+            overlay_view->pop_transformer(vswitch_view_transformer_name);
         }
 
-        wf::view_change_workspace_signal data;
-        data.view = overlay_view;
-        data.from = old_workspace;
-        data.to   = output->workspace->get_current_workspace();
-        output->emit_signal("view-change-workspace", &data);
-
-        set_overlay_view(nullptr);
+        overlay_views.clear();
     }
 };
 

@@ -92,7 +92,13 @@ class vswitch : public wf::plugin_interface_t
                     return true;
                 }
 
-                return add_direction(delta, view);
+                std::vector<wayfire_view> fixed_views;
+                if (view)
+                {
+                    fixed_views.push_back(view);
+                }
+
+                return add_direction(delta, fixed_views);
             } else
             {
                 return false;
@@ -148,19 +154,14 @@ class vswitch : public wf::plugin_interface_t
         }
     }
 
-    bool add_direction(wf::point_t delta, wayfire_view view = nullptr)
+    bool add_direction(wf::point_t delta, std::vector<wayfire_view> views = {})
     {
         if (!is_active() && !start_switch())
         {
             return false;
         }
 
-        if (view && (view->role != wf::VIEW_ROLE_TOPLEVEL))
-        {
-            view = nullptr;
-        }
-
-        algorithm->set_overlay_view(view);
+        algorithm->set_overlay_view(views);
         algorithm->set_target_workspace(
             output->workspace->get_current_workspace() + delta);
 
@@ -170,10 +171,9 @@ class vswitch : public wf::plugin_interface_t
     wf::signal_connection_t on_grabbed_view_disappear = [=] (
         wf::signal_data_t *data)
     {
-        if (get_signaled_view(data) == algorithm->get_overlay_view())
-        {
-            algorithm->set_overlay_view(nullptr);
-        }
+        algorithm->overlay_views.erase(std::remove(algorithm->overlay_views.begin(),
+            algorithm->overlay_views.end(), get_signaled_view(data)),
+            algorithm->overlay_views.end());
     };
 
     wf::signal_connection_t on_set_workspace_request = [=] (
@@ -195,14 +195,8 @@ class vswitch : public wf::plugin_interface_t
         {
             if (this->set_capabilities(0))
             {
-                if (ev->fixed_views.size() > 2)
-                {
-                    LOGE("NOT IMPLEMENTED: ",
-                        "changing workspace with more than 1 fixed view");
-                }
-
                 ev->carried_out = add_direction(ev->new_viewport - ev->old_viewport,
-                    ev->fixed_views.empty() ? nullptr : ev->fixed_views[0]);
+                    ev->fixed_views);
             }
         }
     };

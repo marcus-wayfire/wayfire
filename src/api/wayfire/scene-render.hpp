@@ -9,6 +9,19 @@ namespace wf
 {
 namespace scene
 {
+
+class render_instance_t;
+
+/**
+ * A single rendering call in a render pass.
+ */
+struct render_instruction_t
+{
+    render_instance_t *instance = NULL;
+    wf::region_t damage;
+    wf::render_target_t target;
+};
+
 /**
  * When (parts) of the scenegraph have to be rendered, they have to be
  * 'instantiated' first. The instantiation of a (sub)tree of the scenegraph
@@ -44,6 +57,23 @@ class render_instance_t
      * remain in other render instances of the same node!).
      */
     virtual void collect_damage(wf::region_t& accumulated_damage) = 0;
+
+    /**
+     * Handle the second front-to-back iteration from a render pass.
+     * Each instance should add the render instructions (calls to
+     * render_instance_t::render()) for itself and its children.
+     *
+     * @param instructions A list of render instructions to be executed.
+     *   For efficiency, instructions are evaluated in the reverse order they
+     *   are pushed (e.g. from instructions.rbegin() to instructions.rend()).
+     * @param damage The damaged region of the node, in node-local coordinates.
+     * @param fb The target framebuffer to render the node and its children.
+     *   Note that some nodes may cause their children to be rendered to
+     *   auxilliary buffers.
+     */
+    virtual void schedule_instructions(
+        std::vector<render_instruction_t>& instructions,
+        wf::region_t& damage, const wf::framebuffer_t& fb) {}
 };
 }
 }

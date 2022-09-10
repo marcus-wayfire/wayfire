@@ -9,7 +9,6 @@ namespace wf
 {
 namespace scene
 {
-
 class render_instance_t;
 
 /**
@@ -73,7 +72,8 @@ class render_instance_t
      */
     virtual void schedule_instructions(
         std::vector<render_instruction_t>& instructions,
-        wf::region_t& damage, const wf::framebuffer_t& fb) {}
+        wf::region_t& damage, const wf::framebuffer_t& fb)
+    {}
 };
 }
 }

@@ -15,19 +15,6 @@ using node_ptr = std::shared_ptr<node_t>;
 }
 
 /**
- * When a node receives any type of input, it should report how it handled the
- * event. Thus, depending on the node, the input event may be propagated to other
- * nodes or not.
- */
-enum class input_action
-{
-    /** Do not propagate events further, current node consumed the event. */
-    CONSUME,
-    /** Event processed by the node, but other nodes should also receive it. */
-    PROPAGATE,
-};
-
-/**
  * An interface for scene nodes which interact with the keyboard.
  *
  * Note that by default, nodes do not receive keyboard input. Nodes which wish
@@ -63,10 +50,8 @@ class keyboard_interaction_t
      *
      * @return What should happen with the further processing of the event.
      */
-    virtual input_action handle_keyboard_key(wlr_event_keyboard_key event)
-    {
-        return input_action::PROPAGATE;
-    }
+    virtual void handle_keyboard_key(wlr_event_keyboard_key event)
+    {}
 
     keyboard_interaction_t() = default;
     virtual ~keyboard_interaction_t()
@@ -117,11 +102,9 @@ class pointer_interaction_t
      * @param pointer_position The position where the pointer is currently at.
      * @param button The wlr event describing the event.
      */
-    virtual input_action handle_pointer_button(
+    virtual void handle_pointer_button(
         const wlr_event_pointer_button& event)
-    {
-        return input_action::PROPAGATE;
-    }
+    {}
 
     /**
      * The user moved the pointer.
@@ -129,11 +112,9 @@ class pointer_interaction_t
      * @param pointer_position The new position of the pointer.
      * @param time_ms The time reported by the device when the event happened.
      */
-    virtual input_action handle_pointer_motion(wf::pointf_t pointer_position,
+    virtual void handle_pointer_motion(wf::pointf_t pointer_position,
         uint32_t time_ms)
-    {
-        return input_action::PROPAGATE;
-    }
+    {}
 
     /**
      * The user scrolled.
@@ -141,10 +122,8 @@ class pointer_interaction_t
      * @param pointer_position The position where the pointer is currently at.
      * @param event A structure describing the event.
      */
-    virtual input_action handle_pointer_axis(const wlr_event_pointer_axis& event)
-    {
-        return input_action::PROPAGATE;
-    }
+    virtual void handle_pointer_axis(const wlr_event_pointer_axis& event)
+    {}
 };
 
 /**

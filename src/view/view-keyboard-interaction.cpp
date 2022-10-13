@@ -48,7 +48,7 @@ class view_keyboard_interaction_t : public wf::keyboard_interaction_t
         }
     }
 
-    wf::input_action handle_keyboard_key(wlr_event_keyboard_key event) override
+    void handle_keyboard_key(wlr_event_keyboard_key event) override
     {
         auto iv = interactive_view_from_view(view.get());
         if (iv)
@@ -59,7 +59,5 @@ class view_keyboard_interaction_t : public wf::keyboard_interaction_t
         auto seat = wf::get_core().get_current_seat();
         wlr_seat_keyboard_notify_key(seat,
             event.time_msec, event.keycode, event.state);
-
-        return wf::input_action::CONSUME;
     }
 };

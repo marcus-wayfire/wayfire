@@ -184,8 +184,7 @@ class surface_pointer_interaction_t final : public wf::pointer_interaction_t
         this->surface = si;
     }
 
-    wf::input_action handle_pointer_button(const wlr_event_pointer_button& event)
-    final
+    void handle_pointer_button(const wlr_event_pointer_button& event) final
     {
         auto& seat = wf::get_core_impl().seat;
         bool drag_was_active = seat->drag_active;
@@ -211,8 +210,6 @@ class surface_pointer_interaction_t final : public wf::pointer_interaction_t
                     node->local_coords.x, node->local_coords.y);
             }
         }
-
-        return wf::input_action::CONSUME;
     }
 
     void handle_pointer_enter(wf::pointf_t local) final
@@ -237,8 +234,7 @@ class surface_pointer_interaction_t final : public wf::pointer_interaction_t
         wf::get_core().connect_signal("pointer_motion", &on_pointer_motion);
     }
 
-    wf::input_action handle_pointer_motion(wf::pointf_t local,
-        uint32_t time_ms) final
+    void handle_pointer_motion(wf::pointf_t local, uint32_t time_ms) final
     {
         auto& seat = wf::get_core_impl().seat;
         if (seat->drag_active)
@@ -248,7 +244,7 @@ class surface_pointer_interaction_t final : public wf::pointer_interaction_t
             // possible events. It then needs to make sure that the correct node
             // receives the event.
             handle_motion_dnd(time_ms);
-            return wf::input_action::CONSUME;
+            return;
         }
 
         if (auto cs = wf::compositor_surface_from_surface(surface))
@@ -258,11 +254,9 @@ class surface_pointer_interaction_t final : public wf::pointer_interaction_t
         {
             wlr_seat_pointer_notify_motion(seat->seat, time_ms, local.x, local.y);
         }
-
-        return wf::input_action::CONSUME;
     }
 
-    wf::input_action handle_pointer_axis(const wlr_event_pointer_axis& ev) final
+    void handle_pointer_axis(const wlr_event_pointer_axis& ev) final
     {
         if (auto cs = wf::compositor_surface_from_surface(surface))
         {
@@ -273,8 +267,6 @@ class surface_pointer_interaction_t final : public wf::pointer_interaction_t
             wlr_seat_pointer_notify_axis(seat, ev.time_msec, ev.orientation,
                 ev.delta, ev.delta_discrete, ev.source);
         }
-
-        return wf::input_action::CONSUME;
     }
 
     void handle_pointer_leave() final

@@ -137,26 +137,6 @@ static int get_layer_index(const wf::scene::node_t *node)
     return -1;
 }
 
-static bool is_dynamic_output(const wf::scene::node_t *node)
-{
-    if (auto output = dynamic_cast<wf::scene::output_node_t*>(node->parent()))
-    {
-        return node == output->dynamic.get();
-    }
-
-    return false;
-}
-
-static bool is_static_output(const wf::scene::node_t *node)
-{
-    if (auto output = dynamic_cast<wf::scene::output_node_t*>(node->parent()))
-    {
-        return node == output->_static.get();
-    }
-
-    return false;
-}
-
 std::string node_t::stringify() const
 {
     std::string description = "node ";
@@ -178,12 +158,6 @@ std::string node_t::stringify() const
             (size_t)layer::ALL_LAYERS);
         description  = "layer_";
         description += layer_names[layer_idx];
-    } else if (is_static_output(this))
-    {
-        description = "static";
-    } else if (is_dynamic_output(this))
-    {
-        description = "dynamic";
     }
 
     return description + " " + stringify_flags();
@@ -283,10 +257,7 @@ wf::geometry_t node_t::get_bounding_box()
 // remove them dynamically ...
 output_node_t::output_node_t(wf::output_t *output) : floating_inner_node_t(false)
 {
-    this->output  = output;
-    this->_static = std::make_shared<floating_inner_node_t>(true);
-    this->dynamic = std::make_shared<floating_inner_node_t>(true);
-    set_children_unchecked({dynamic, _static});
+    this->output = output;
 }
 
 std::string output_node_t::stringify() const

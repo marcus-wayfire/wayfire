@@ -11,6 +11,7 @@
 #include "wayfire-shell.hpp"
 #include "../core/seat/input-manager.hpp"
 #include "../view/xdg-shell.hpp"
+#include <memory>
 #include <wayfire/util/log.hpp>
 #include <wayfire/nonstd/wlroots-full.hpp>
 
@@ -34,6 +35,9 @@ wf::output_impl_t::output_impl_t(wlr_output *handle,
         scene::add_back(root->layers[layer], nodes[layer]);
     }
 
+    wset = std::make_shared<scene::floating_inner_node_t>(false);
+    scene::add_front(node_for_layer(scene::layer::WORKSPACE), wset);
+
     workspace = std::make_unique<workspace_manager>(this);
     render    = std::make_unique<render_manager>(this);
 
@@ -49,6 +53,11 @@ std::shared_ptr<wf::scene::output_node_t> wf::output_impl_t::node_for_layer(
     wf::scene::layer layer) const
 {
     return nodes[(int)layer];
+}
+
+wf::scene::floating_inner_ptr wf::output_impl_t::get_wset() const
+{
+    return this->wset;
 }
 
 void wf::output_impl_t::start_plugins()

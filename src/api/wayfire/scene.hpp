@@ -32,11 +32,7 @@ class output_layout_t;
  * Level 3: in each layer, there is a special output node for each currently
  *   enabled output. By default, this node's bounding box is limited to the
  *   extents of the output, so that no nodes overlap multiple outputs.
- * Level 4: in each output node, there is a static and a dynamic container.
- *   Static containers contain views which do not change when workspace sets
- *   are changed, for example layer-shell views. Dynamic containers contain
- *   the views which are bound to the current workspace set.
- * Level 5 and beyond: These levels typically contain views and group of views,
+ * Level 4 and beyond: These levels typically contain views and group of views,
  *   or special effects (particle systems and the like).
  *
  * Each level may contain additional nodes added by plugins (or by core in the
@@ -57,13 +53,12 @@ class output_layout_t;
  *
  * - A similar 'trick' can be used for grabbing all input on a particular output
  *   and is the preferred way to do what input grabs used to do prior to Wayfire
- *   0.8.0. To emulate a grab, create an input-only scene node in the OVERRIDE
- *   layer on an output (it thus gets all touch and pointer input automatically)
- *   and make it use an exclusive keyboard input mode to grab the keyboard as
- *   well.
+ *   0.8.0. To emulate a grab, create an input-only scene node and place it above
+ *   every other node. Thus it will always be selected for input on the output it
+ *   is visible on.
  *
- * - Always-on-top views are simply nodes which are placed above the dynamic
- *   container of the workspace layer of each output.
+ * - Always-on-top views are simply nodes which are placed above the workspace
+ *   set of each output.
  *
  * Regarding coordinate systems: each node possesses a coordinate system. Some
  * nodes (for example, nodes which simply group other nodes together) share the
@@ -354,21 +349,6 @@ class output_node_t final : public floating_inner_node_t
     wf::geometry_t get_bounding_box() override;
 
     std::optional<input_node_t> find_node_at(const wf::pointf_t& at) override;
-
-    /**
-     * A container for the static child nodes.
-     * Static child nodes are always below the dynamic nodes of an output and
-     * are usually not modified when the workspace on the output changes, so
-     * things like backgrounds and panels are usually static.
-     */
-    std::shared_ptr<floating_inner_node_t> _static;
-
-    /**
-     * A container for the dynamic child nodes.
-     * These nodes move together with the output's workspaces.
-     * These nodes are most commonly views.
-     */
-    std::shared_ptr<floating_inner_node_t> dynamic;
 
     /**
      * Get the output this node is responsible for.

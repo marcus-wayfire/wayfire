@@ -16,6 +16,7 @@ class output_impl_t : public output_t
 {
   private:
     std::shared_ptr<scene::output_node_t> nodes[TOTAL_LAYERS];
+    scene::floating_inner_ptr wset;
 
   private:
     std::unordered_multiset<wf::plugin_grab_interface_t*> active_plugins;
@@ -66,8 +67,9 @@ class output_impl_t : public output_t
     /**
      * Implementations of the public APIs
      */
-    virtual std::shared_ptr<wf::scene::output_node_t> node_for_layer(
+    std::shared_ptr<wf::scene::output_node_t> node_for_layer(
         wf::scene::layer layer) const override;
+    scene::floating_inner_ptr get_wset() const override;
     bool can_activate_plugin(const plugin_grab_interface_uptr& owner,
         uint32_t flags = 0) override;
     bool can_activate_plugin(uint32_t caps, uint32_t flags = 0) override;

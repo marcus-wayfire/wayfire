@@ -93,8 +93,15 @@ class output_layer_manager_t
         damage_views(view);
         auto idx = (wf::scene::layer)layer_index_from_mask(layer);
         scene::remove_child(view->get_root_node());
-        scene::add_front(output->node_for_layer(idx)->dynamic,
-            view->get_root_node());
+
+        if (layer == LAYER_WORKSPACE)
+        {
+            scene::add_front(output->get_wset(), view->get_root_node());
+        } else
+        {
+            scene::add_front(output->node_for_layer(idx), view->get_root_node());
+        }
+
         damage_views(view);
     }
 

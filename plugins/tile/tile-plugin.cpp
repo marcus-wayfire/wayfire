@@ -98,9 +98,7 @@ class tile_plugin_t : public wf::plugin_interface_t
                 tiled_sublayer[i][j] =
                     std::make_shared<wf::scene::floating_inner_node_t>(false);
 
-                wf::scene::add_front(
-                    output->node_for_layer(wf::scene::layer::WORKSPACE)->dynamic,
-                    tiled_sublayer[i][j]);
+                wf::scene::add_front(output->get_wset(), tiled_sublayer[i][j]);
             }
         }
 
@@ -605,9 +603,7 @@ class tile_plugin_t : public wf::plugin_interface_t
     void destroy_sublayer(wf::scene::floating_inner_ptr sublayer)
     {
         // Transfer views to the top
-        auto root = output->node_for_layer(
-            wf::scene::layer::WORKSPACE)->dynamic;
-
+        auto root     = output->get_wset();
         auto children = root->get_children();
         auto sublayer_children = sublayer->get_children();
         sublayer->set_children_list({});

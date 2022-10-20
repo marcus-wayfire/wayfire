@@ -197,7 +197,8 @@ class node_t : public std::enable_shared_from_this<node_t>,
      * The default implementation just generates render instances from its
      * children.
      *
-     * @param instances A vector of render instances to add to.
+     * @param instances A vector of render instances to add to. The instances
+     *   are sorted from the foremost (or topmost) to the last (bottom-most).
      * @param push_damage A callback used to report damage on the new render
      *   instance.
      */

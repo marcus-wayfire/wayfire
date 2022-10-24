@@ -28,6 +28,11 @@ class keyboard_interaction_t
     keyboard_interaction_t& operator =(const keyboard_interaction_t&) = delete;
     keyboard_interaction_t& operator =(keyboard_interaction_t&&) = delete;
 
+    virtual bool accepts_input() const
+    {
+        return false;
+    }
+
     /**
      * Handle a keyboard enter event.
      * This means that the node is now focused.
@@ -60,11 +65,6 @@ class keyboard_interaction_t
 
 /**
  * An interface for scene nodes which interact with pointer input.
- *
- * As opposed to keyboard input, all nodes are eligible for receiving pointer
- * and input. As a result, every node may receive motion, button, etc. events.
- * Nodes which do not wish to process events may simply not accept input at
- * any point (as the default accepts_input implementation does).
  */
 class pointer_interaction_t
 {

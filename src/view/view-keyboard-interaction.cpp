@@ -34,6 +34,11 @@ class view_keyboard_interaction_t : public wf::keyboard_interaction_t
         view->connect(&view_unmapped);
     }
 
+    bool accepts_input() const override
+    {
+        return view->get_keyboard_focus_surface() != nullptr;
+    }
+
     void handle_keyboard_enter() override
     {
         if (this->view->role == wf::VIEW_ROLE_TOPLEVEL)

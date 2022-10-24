@@ -273,6 +273,25 @@ class wayfire_move : public wf::plugin_interface_t
 
     bool initiate(wayfire_view view)
     {
+        // First, make sure that the view is on the output the input is.
+        auto pos = get_global_input_coords();
+        auto target_output =
+            wf::get_core().output_layout->get_output_at(pos.x, pos.y);
+
+        if (target_output && (view->get_output() != target_output))
+        {
+            auto offset = wf::origin(view->get_output()->get_layout_geometry()) +
+                -wf::origin(target_output->get_layout_geometry());
+
+            wf::get_core().move_view_to_output(view, target_output, false);
+            view->move(view->get_wm_geometry().x + offset.x,
+                view->get_wm_geometry().y + offset.y);
+
+            // On the new output
+            view->move_request();
+            return false;
+        }
+
         wayfire_view grabbed_view = view;
         view = get_target_view(view);
         if (!can_move_view(view))

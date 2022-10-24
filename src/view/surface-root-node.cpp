@@ -1,5 +1,6 @@
 #include "surface-impl.hpp"
 #include "wayfire/debug.hpp"
+#include "wayfire/geometry.hpp"
 #include "wayfire/scene.hpp"
 #include <memory>
 #include <wayfire/surface.hpp>
@@ -111,7 +112,8 @@ class surface_root_render_instance_t : public render_instance_t
 };
 
 void surface_root_node_t::gen_render_instances(
-    std::vector<render_instance_uptr>& instances, damage_callback damage)
+    std::vector<render_instance_uptr>& instances, damage_callback damage,
+    const std::optional<wf::geometry_t>&)
 {
     instances.push_back(
         std::make_unique<surface_root_render_instance_t>(si, damage));

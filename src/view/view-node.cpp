@@ -168,7 +168,7 @@ class view_render_instance_t : public render_instance_t
 };
 
 void view_node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
-    damage_callback push_damage)
+    damage_callback push_damage, const std::optional<wf::geometry_t>&)
 {
     instances.push_back(std::make_unique<wf::scene::view_render_instance_t>(
         this->view, push_damage));

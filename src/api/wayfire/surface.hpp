@@ -225,8 +225,10 @@ class surface_root_node_t : public wf::scene::floating_inner_node_t
     wf::pointf_t to_global(const wf::pointf_t& point) override;
 
     std::string stringify() const override;
-    void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback damage) override;
+    void gen_render_instances(
+        std::vector<render_instance_uptr>& instances,
+        damage_callback damage,
+        const std::optional<wf::geometry_t>& viewport) override;
     wf::geometry_t get_bounding_box() override;
 
   private:
@@ -249,8 +251,10 @@ class surface_node_t : public wf::scene::node_t
         return si;
     }
 
-    void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback damage) override;
+    void gen_render_instances(
+        std::vector<render_instance_uptr>& instances,
+        damage_callback damage,
+        const std::optional<wf::geometry_t>& viewport) override;
     wf::geometry_t get_bounding_box() override;
 
   private:

@@ -206,7 +206,7 @@ class default_render_instance_t : public render_instance_t
 };
 
 void node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
-    damage_callback push_damage)
+    damage_callback push_damage, const std::optional<wf::geometry_t>& vp)
 {
     // Add self for damage tracking
     instances.push_back(
@@ -217,7 +217,7 @@ void node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
     {
         if (ch->is_enabled())
         {
-            ch->gen_render_instances(instances, push_damage);
+            ch->gen_render_instances(instances, push_damage, vp);
         }
     }
 }
@@ -364,8 +364,20 @@ class output_render_instance_t : public default_render_instance_t
 };
 
 void output_node_t::gen_render_instances(
-    std::vector<render_instance_uptr> & instances, damage_callback push_damage)
+    std::vector<render_instance_uptr> & instances, damage_callback push_damage,
+    const std::optional<wf::geometry_t>& vp)
 {
+    if (vp && this->limit_region)
+    {
+        // If the limit region is set and we are limiting the generation of
+        // instances to a particular region (typically an output), make sure we
+        // generate instances only if the output will be visible.
+        if (!(*vp & *this->limit_region))
+        {
+            return;
+        }
+    }
+
     instances.push_back(
         std::make_unique<output_render_instance_t>(this, push_damage, output));
 }

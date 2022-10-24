@@ -14,6 +14,7 @@
 #include "plugins/common/wayfire/plugins/common/shared-core-data.hpp"
 #include "wayfire/core.hpp"
 #include "wayfire/debug.hpp"
+#include "wayfire/geometry.hpp"
 #include "wayfire/object.hpp"
 #include "wayfire/opengl.hpp"
 #include "wayfire/region.hpp"
@@ -297,7 +298,7 @@ class blur_node_t : public floating_inner_node_t
     }
 
     void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback push_damage) override
+        damage_callback push_damage, const std::optional<wf::geometry_t>&) override
     {
         instances.push_back(std::make_unique<blur_render_instance_t>(
             this, provider, push_damage));

@@ -196,9 +196,19 @@ class node_t : public std::enable_shared_from_this<node_t>,
      *   are sorted from the foremost (or topmost) to the last (bottom-most).
      * @param push_damage A callback used to report damage on the new render
      *   instance.
+     * @param viewport An optional parameter describing the target area which
+     *   will be rendered to. It may be too big (or infinite if not set). This
+     *   information can be used as a hint to avoid adding render instances which
+     *   are not needed - for example to avoid render instances for views on
+     *   outputs they will never be visible on. Note that this is a conservative
+     *   approximation, that is, render instances may be added if they are not
+     *   needed, but they must be added if they are ever to become visible in the
+     *   target viewport.
      */
-    virtual void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback push_damage);
+    virtual void gen_render_instances(
+        std::vector<render_instance_uptr>& instances,
+        damage_callback push_damage,
+        const std::optional<wf::geometry_t>& viewport = {});
 
     /**
      * Generate a texture from the node.
@@ -344,10 +354,12 @@ class output_node_t final : public floating_inner_node_t
      * The output's render instance simply adjusts damage, rendering, etc. to
      * account for the output's position in the output layout.
      */
-    void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback push_damage) override;
-    wf::geometry_t get_bounding_box() override;
+    void gen_render_instances(
+        std::vector<render_instance_uptr>& instances,
+        damage_callback push_damage,
+        const std::optional<wf::geometry_t>& viewport) override;
 
+    wf::geometry_t get_bounding_box() override;
     std::optional<input_node_t> find_node_at(const wf::pointf_t& at) override;
 
     /**

@@ -38,5 +38,9 @@
       Exceptions are made for options not available via wlr-output-management, like output mirroring and custom modelines.</_long>
       <default>false</default>
     </option>
+    <option name="remove_output_limits" type="bool">
+      <_short>Allow views to overlap between multiple outputs. Many of the core plugins will not behave properly with this option set!</_short>
+      <default>false</default>
+    </option>
 	</plugin>
 </wayfire>

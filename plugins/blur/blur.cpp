@@ -99,7 +99,7 @@ class blur_render_instance_t : public render_instance_t
 
   public:
     blur_render_instance_t(node_t *self, blur_algorithm_provider provider,
-        damage_callback push_damage)
+        damage_callback push_damage, std::optional<wf::geometry_t> vp)
     {
         this->self     = self;
         this->provider = provider;
@@ -113,7 +113,7 @@ class blur_render_instance_t : public render_instance_t
         this->cached_damage |= self->get_bounding_box();
         for (auto& ch : self->get_children())
         {
-            ch->gen_render_instances(view_instance, push_damage_child);
+            ch->gen_render_instances(view_instance, push_damage_child, vp);
         }
     }
 
@@ -280,6 +280,11 @@ class blur_render_instance_t : public render_instance_t
         saved_pixels_region.clear();
         OpenGL::render_end();
     }
+
+    bool has_instances()
+    {
+        return !view_instance.empty();
+    }
 };
 
 class blur_node_t : public floating_inner_node_t
@@ -298,10 +303,16 @@ class blur_node_t : public floating_inner_node_t
     }
 
     void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback push_damage, const std::optional<wf::geometry_t>&) override
+        damage_callback push_damage,
+        const std::optional<wf::geometry_t>& vp) override
     {
-        instances.push_back(std::make_unique<blur_render_instance_t>(
-            this, provider, push_damage));
+        auto uptr = std::make_unique<blur_render_instance_t>(
+            this, provider, push_damage, vp);
+
+        if (uptr->has_instances())
+        {
+            instances.push_back(std::move(uptr));
+        }
     }
 };
 }

@@ -168,8 +168,20 @@ class view_render_instance_t : public render_instance_t
 };
 
 void view_node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
-    damage_callback push_damage, const std::optional<wf::geometry_t>&)
+    damage_callback push_damage, const std::optional<wf::geometry_t>& vp)
 {
+    if ((this->view->role == VIEW_ROLE_DESKTOP_ENVIRONMENT) &&
+        this->view->sticky)
+    {
+        // FIXME: this code should be layer-shell-node-specific
+        // Special case: layer-shell views live only inside their outputs and
+        // have no benefit from being rendered on other outputs.
+        if (vp && !(*vp & view->get_bounding_box()))
+        {
+            return;
+        }
+    }
+
     instances.push_back(std::make_unique<wf::scene::view_render_instance_t>(
         this->view, push_damage));
 }

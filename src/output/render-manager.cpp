@@ -53,7 +53,8 @@ struct output_damage_t
         };
 
         render_instances.clear();
-        root->gen_render_instances(render_instances, push_damage, {});
+        root->gen_render_instances(render_instances, push_damage,
+            wo->get_layout_geometry());
     }
 
     output_damage_t(output_t *output)

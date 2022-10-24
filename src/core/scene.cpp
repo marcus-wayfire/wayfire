@@ -295,11 +295,16 @@ class output_render_instance_t : public default_render_instance_t
 
   public:
     output_render_instance_t(output_node_t *self, damage_callback callback,
-        wf::output_t *output) :
+        wf::output_t *output, std::optional<wf::geometry_t> vp) :
         default_render_instance_t(self, transform_damage(callback))
     {
         this->self   = self;
         this->output = output;
+
+        if (vp)
+        {
+            vp = vp.value() + -wf::origin(output->get_layout_geometry());
+        }
 
         // Children are stored as a sublist, because we need to translate every
         // time between global and output-local geometry.
@@ -308,7 +313,7 @@ class output_render_instance_t : public default_render_instance_t
             if (child->is_enabled())
             {
                 child->gen_render_instances(children,
-                    transform_damage(callback));
+                    transform_damage(callback), vp);
             }
         }
     }
@@ -379,7 +384,7 @@ void output_node_t::gen_render_instances(
     }
 
     instances.push_back(
-        std::make_unique<output_render_instance_t>(this, push_damage, output));
+        std::make_unique<output_render_instance_t>(this, push_damage, output, vp));
 }
 
 wf::geometry_t output_node_t::get_bounding_box()

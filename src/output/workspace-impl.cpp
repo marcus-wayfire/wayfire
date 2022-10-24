@@ -15,6 +15,7 @@
 #include "../view/view-impl.hpp"
 #include "output-impl.hpp"
 #include "wayfire/debug.hpp"
+#include "wayfire/option-wrapper.hpp"
 #include "wayfire/scene-input.hpp"
 #include "wayfire/scene.hpp"
 
@@ -652,14 +653,21 @@ class workspace_manager::impl
     wf::output_t *output;
     wf::geometry_t output_geometry;
 
+    wf::option_wrapper_t<bool> remove_output_limits{
+        "workarounds/remove_output_limits"};
+
+
     signal_connection_t output_geometry_changed = [&] (void*)
     {
         using namespace wf::scene;
 
-        for (int i = 0; i < (int)wf::scene::layer::ALL_LAYERS; i++)
+        if (!remove_output_limits)
         {
-            output->node_for_layer((layer)i)->limit_region =
-                output->get_layout_geometry();
+            for (int i = 0; i < (int)wf::scene::layer::ALL_LAYERS; i++)
+            {
+                output->node_for_layer((layer)i)->limit_region =
+                    output->get_layout_geometry();
+            }
         }
 
         wf::scene::update(wf::get_core().scene(), update_flag::INPUT_STATE);

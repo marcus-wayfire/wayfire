@@ -113,7 +113,7 @@ class surface_root_render_instance_t : public render_instance_t
 
 void surface_root_node_t::gen_render_instances(
     std::vector<render_instance_uptr>& instances, damage_callback damage,
-    const std::optional<wf::geometry_t>&)
+    wf::output_t *output)
 {
     instances.push_back(
         std::make_unique<surface_root_render_instance_t>(si, damage));

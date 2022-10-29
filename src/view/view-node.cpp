@@ -168,7 +168,7 @@ class view_render_instance_t : public render_instance_t
 };
 
 void view_node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
-    damage_callback push_damage, const std::optional<wf::geometry_t>& vp)
+    damage_callback push_damage, wf::output_t *shown_on)
 {
     if ((this->view->role == VIEW_ROLE_DESKTOP_ENVIRONMENT) &&
         this->view->sticky)
@@ -176,7 +176,7 @@ void view_node_t::gen_render_instances(std::vector<render_instance_uptr> & insta
         // FIXME: this code should be layer-shell-node-specific
         // Special case: layer-shell views live only inside their outputs and
         // have no benefit from being rendered on other outputs.
-        if (vp && !(*vp & view->get_bounding_box()))
+        if (shown_on && (this->view->get_output() != shown_on))
         {
             return;
         }

@@ -90,7 +90,7 @@ class dnd_root_icon_root_node_t : public floating_inner_node_t
      * and sometimes render them, sometimes not ...
      */
     void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback push_damage, const std::optional<wf::geometry_t>&) override
+        damage_callback push_damage, wf::output_t *output) override
     {
         instances.push_back(std::make_unique<dnd_icon_root_render_instance_t>(
             this, icon, push_damage));

@@ -625,7 +625,7 @@ class view_node_t : public scene::floating_inner_node_t
     void gen_render_instances(
         std::vector<render_instance_uptr>& instances,
         damage_callback push_damage,
-        const std::optional<wf::geometry_t>& viewport) override;
+        wf::output_t *output) override;
 
     std::optional<wf::texture_t> to_texture() const override;
     wf::geometry_t get_bounding_box() override;

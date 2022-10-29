@@ -206,7 +206,7 @@ class default_render_instance_t : public render_instance_t
 };
 
 void node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
-    damage_callback push_damage, const std::optional<wf::geometry_t>& vp)
+    damage_callback push_damage, wf::output_t *output)
 {
     // Add self for damage tracking
     instances.push_back(
@@ -217,7 +217,7 @@ void node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
     {
         if (ch->is_enabled())
         {
-            ch->gen_render_instances(instances, push_damage, vp);
+            ch->gen_render_instances(instances, push_damage, output);
         }
     }
 }
@@ -295,16 +295,11 @@ class output_render_instance_t : public default_render_instance_t
 
   public:
     output_render_instance_t(output_node_t *self, damage_callback callback,
-        wf::output_t *output, std::optional<wf::geometry_t> vp) :
+        wf::output_t *output, wf::output_t *shown_on) :
         default_render_instance_t(self, transform_damage(callback))
     {
         this->self   = self;
         this->output = output;
-
-        if (vp)
-        {
-            vp = vp.value() + -wf::origin(output->get_layout_geometry());
-        }
 
         // Children are stored as a sublist, because we need to translate every
         // time between global and output-local geometry.
@@ -313,7 +308,7 @@ class output_render_instance_t : public default_render_instance_t
             if (child->is_enabled())
             {
                 child->gen_render_instances(children,
-                    transform_damage(callback), vp);
+                    transform_damage(callback), shown_on);
             }
         }
     }
@@ -370,21 +365,19 @@ class output_render_instance_t : public default_render_instance_t
 
 void output_node_t::gen_render_instances(
     std::vector<render_instance_uptr> & instances, damage_callback push_damage,
-    const std::optional<wf::geometry_t>& vp)
+    wf::output_t *shown_on)
 {
-    if (vp && this->limit_region)
+    if (this->limit_region && shown_on && (shown_on != this->output))
     {
         // If the limit region is set and we are limiting the generation of
         // instances to a particular region (typically an output), make sure we
         // generate instances only if the output will be visible.
-        if (!(*vp & *this->limit_region))
-        {
-            return;
-        }
+        return;
     }
 
     instances.push_back(
-        std::make_unique<output_render_instance_t>(this, push_damage, output, vp));
+        std::make_unique<output_render_instance_t>(this, push_damage, output,
+            shown_on));
 }
 
 wf::geometry_t output_node_t::get_bounding_box()

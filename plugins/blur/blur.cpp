@@ -99,7 +99,7 @@ class blur_render_instance_t : public render_instance_t
 
   public:
     blur_render_instance_t(node_t *self, blur_algorithm_provider provider,
-        damage_callback push_damage, std::optional<wf::geometry_t> vp)
+        damage_callback push_damage, wf::output_t *shown_on)
     {
         this->self     = self;
         this->provider = provider;
@@ -113,7 +113,7 @@ class blur_render_instance_t : public render_instance_t
         this->cached_damage |= self->get_bounding_box();
         for (auto& ch : self->get_children())
         {
-            ch->gen_render_instances(view_instance, push_damage_child, vp);
+            ch->gen_render_instances(view_instance, push_damage_child, shown_on);
         }
     }
 
@@ -303,11 +303,10 @@ class blur_node_t : public floating_inner_node_t
     }
 
     void gen_render_instances(std::vector<render_instance_uptr>& instances,
-        damage_callback push_damage,
-        const std::optional<wf::geometry_t>& vp) override
+        damage_callback push_damage, wf::output_t *shown_on) override
     {
         auto uptr = std::make_unique<blur_render_instance_t>(
-            this, provider, push_damage, vp);
+            this, provider, push_damage, shown_on);
 
         if (uptr->has_instances())
         {

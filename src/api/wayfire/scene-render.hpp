@@ -19,6 +19,28 @@ using node_ptr = std::shared_ptr<node_t>;
 class render_instance_t;
 
 /**
+ * Describes the result of trying to do direct scanout of a render instance on
+ * an output.
+ */
+enum class direct_scanout
+{
+    /**
+     * The node cannot be directly scanned out on the output, but does not occlude
+     * any node below it which may be scanned out directly.
+     */
+    SKIP,
+    /**
+     * The node cannot be directly scanned out on the output, but covers a part
+     * of the output, thus makes direct scanout impossible.
+     */
+    OCCLUSION,
+    /**
+     * The node was successfully scanned out.
+     */
+    SUCCESS,
+};
+
+/**
  * A single rendering call in a render pass.
  */
 struct render_instruction_t
@@ -92,6 +114,23 @@ class render_instance_t
      */
     virtual void presentation_feedback(wf::output_t *output)
     {}
+
+    /**
+     * Attempt direct scanout on the given output.
+     *
+     * Direct scanout is an optimization where a buffer from a node is directly
+     * attached as the front buffer of an output. This is possible in a single
+     * case, namely when the topmost node with visible contents on an output
+     * covers it perfectly.
+     *
+     * @return The result of the attempt, see @direct_scanout.
+     */
+    virtual direct_scanout try_scanout(wf::output_t *output)
+    {
+        // By default, we report an occlusion, e.g. scanout is not possible,
+        // neither for this node, nor for nodes below.
+        return direct_scanout::OCCLUSION;
+    }
 };
 
 using render_instance_uptr = std::unique_ptr<render_instance_t>;
@@ -194,5 +233,15 @@ struct render_pass_params_t
  */
 wf::region_t run_render_pass(
     const render_pass_params_t& params, uint32_t flags);
+
+/**
+ * A helper function for direct scanout implementations.
+ * It tries to forward the direct scanout request to the first render instance
+ * in the given list, and returns the first non-SKIP result, or SKIP, if no
+ * instance interacts with direct scanout.
+ */
+direct_scanout try_scanout_from_list(
+    const std::vector<render_instance_uptr>& instances,
+    wf::output_t *scanout);
 }
 }

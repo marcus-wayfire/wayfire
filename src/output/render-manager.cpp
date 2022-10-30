@@ -882,28 +882,15 @@ class wf::render_manager::impl
         return nullptr;
     }
 
-    wayfire_view find_scanout_view()
-    {
-        for (int layer = (int)wf::scene::layer::ALL_LAYERS - 1; layer >= 0; layer--)
-        {
-            if (auto view = get_first_view_recursive(
-                output->node_for_layer((wf::scene::layer)layer)))
-            {
-                return view;
-            }
-        }
-
-        return nullptr;
-    }
-
-    wayfire_view last_scanout;
     /**
-     * Try to directly scanout a view
+     * Try to directly scanout a view on the output, thereby skipping rendering
+     * entirely.
+     *
+     * @return True if scanout was successful, False otherwise.
      */
     bool do_direct_scanout()
     {
         const bool can_scanout =
-            !wf::get_core_impl().seat->drag_active &&
             !output_inhibit_counter &&
             !renderer &&
             effects->can_scanout() &&
@@ -914,62 +901,9 @@ class wf::render_manager::impl
             return false;
         }
 
-        auto candidate = find_scanout_view();
-        if (!candidate)
-        {
-            return false;
-        }
-
-        // The candidate must cover the whole output
-        if (candidate->get_output_geometry() != output->get_relative_geometry())
-        {
-            return false;
-        }
-
-        // The view must have only a single surface and no transformers
-        if (candidate->has_transformer() ||
-            !candidate->priv->surface_children_above.empty() ||
-            !candidate->children.empty())
-        {
-            return false;
-        }
-
-        // Must have a wlr surface with the correct scale and transform
-        auto surface = candidate->get_wlr_surface();
-        if (!surface ||
-            (surface->current.scale != output->handle->scale) ||
-            (surface->current.transform != output->handle->transform))
-        {
-            return false;
-        }
-
-        // Finally, the opaque region must be the full surface.
-        wf::region_t non_opaque = output->get_relative_geometry();
-        non_opaque ^= candidate->get_opaque_region(wf::point_t{0, 0});
-        if (!non_opaque.empty())
-        {
-            return false;
-        }
-
-        wlr_presentation_surface_sampled_on_output(
-            wf::get_core().protocols.presentation, surface, output->handle);
-        wlr_output_attach_buffer(output->handle, &surface->buffer->base);
-
-        if (wlr_output_commit(output->handle))
-        {
-            if (candidate != last_scanout)
-            {
-                last_scanout = candidate;
-                LOGD("Scanned out ",
-                    candidate->get_title(), ",", candidate->get_app_id());
-            }
-
-            return true;
-        } else
-        {
-            LOGD("Failed to scan out view ", candidate->get_title());
-            return false;
-        }
+        auto result = scene::try_scanout_from_list(
+            output_damage->render_instances, output);
+        return result == scene::direct_scanout::SUCCESS;
     }
 
     /**
@@ -1024,9 +958,6 @@ class wf::render_manager::impl
             // Yet another optimization: if we can directly scanout, we should
             // stop the rest of the repaint cycle.
             return;
-        } else
-        {
-            last_scanout = nullptr;
         }
 
         bool needs_swap;
@@ -1225,6 +1156,22 @@ wf::region_t scene::run_render_pass(
     }
 
     return swap_damage;
+}
+
+scene::direct_scanout scene::try_scanout_from_list(
+    const std::vector<scene::render_instance_uptr>& instances,
+    wf::output_t *scanout)
+{
+    for (auto& ch : instances)
+    {
+        auto res = ch->try_scanout(scanout);
+        if (res != direct_scanout::SKIP)
+        {
+            return res;
+        }
+    }
+
+    return direct_scanout::SKIP;
 }
 
 render_manager::render_manager(output_t *o) :

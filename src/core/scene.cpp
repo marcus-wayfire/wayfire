@@ -203,6 +203,13 @@ class default_render_instance_t : public render_instance_t
     {
         wf::dassert(false, "Rendering an inner node?");
     }
+
+    direct_scanout try_scanout(wf::output_t *output) override
+    {
+        // Nodes without actual visual content do not prevent further nodes
+        // from being scanned out.
+        return direct_scanout::SKIP;
+    }
 };
 
 void node_t::gen_render_instances(std::vector<render_instance_uptr> & instances,
@@ -360,6 +367,27 @@ class output_render_instance_t : public default_render_instance_t
         }
 
         damage += offset;
+    }
+
+    direct_scanout try_scanout(wf::output_t *scanout) override
+    {
+        if ((scanout != this->output) && this->self->limit_region)
+        {
+            // Can't scanout on a different output because it is outside
+            // of the limit region
+            return direct_scanout::SKIP;
+        }
+
+        for (auto& ch : children)
+        {
+            auto res = ch->try_scanout(scanout);
+            if (res != direct_scanout::SKIP)
+            {
+                return res;
+            }
+        }
+
+        return direct_scanout::SKIP;
     }
 };
 

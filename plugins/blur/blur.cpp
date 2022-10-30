@@ -281,6 +281,12 @@ class blur_render_instance_t : public render_instance_t
         OpenGL::render_end();
     }
 
+    direct_scanout try_scanout(wf::output_t *output) override
+    {
+        // Enable direct scanout if it is possible
+        return scene::try_scanout_from_list(view_instance, output);
+    }
+
     bool has_instances()
     {
         return !view_instance.empty();

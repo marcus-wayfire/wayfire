@@ -182,14 +182,21 @@ class view_render_instance_t : public render_instance_t
 
         // The view must have only a single surface and no transformers
         if (view->has_transformer() ||
-            !view->priv->surface_children_above.empty() ||
             !view->children.empty())
         {
             return direct_scanout::OCCLUSION;
         }
 
+        const auto& desired_size = wf::dimensions(output->get_relative_geometry());
+        auto candidate = this->view->enumerate_surfaces().front();
+        if ((candidate.position != wf::point_t{0, 0}) ||
+            (candidate.surface->get_size() != desired_size))
+        {
+            return direct_scanout::OCCLUSION;
+        }
+
         // Must have a wlr surface with the correct scale and transform
-        auto surface = view->get_wlr_surface();
+        auto surface = candidate.surface->get_wlr_surface();
         if (!surface ||
             (surface->current.scale != output->handle->scale) ||
             (surface->current.transform != output->handle->transform))
@@ -199,7 +206,7 @@ class view_render_instance_t : public render_instance_t
 
         // Finally, the opaque region must be the full surface.
         wf::region_t non_opaque = output->get_relative_geometry();
-        non_opaque ^= view->get_opaque_region(wf::point_t{0, 0});
+        non_opaque ^= candidate.surface->get_opaque_region(wf::point_t{0, 0});
         if (!non_opaque.empty())
         {
             return direct_scanout::OCCLUSION;

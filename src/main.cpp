@@ -189,6 +189,11 @@ void parse_extended_debugging(const std::vector<std::string>& categories)
             LOGD("Enabling extended debugging for wlroots");
             wf::log::enabled_categories.set(
                 (size_t)wf::log::logging_category::WLR, 1);
+        } else if (cat == "scanout")
+        {
+            LOGD("Enabling extended debugging for direct scanout");
+            wf::log::enabled_categories.set(
+                (size_t)wf::log::logging_category::SCANOUT, 1);
         } else
         {
             LOGE("Unrecognized debugging category \"", cat, "\"");

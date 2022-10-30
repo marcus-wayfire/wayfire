@@ -606,6 +606,8 @@ class view_node_t : public scene::floating_inner_node_t
   public:
     view_node_t(wayfire_view view);
     std::optional<input_node_t> find_node_at(const wf::pointf_t& at) override;
+    void collect_visible_nodes(
+        std::vector<node_t*>& nodes, wf::geometry_t region) override;
     std::string stringify() const override;
 
     wf::pointf_t to_local(const wf::pointf_t& point) override;

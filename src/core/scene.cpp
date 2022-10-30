@@ -65,6 +65,16 @@ std::optional<input_node_t> node_t::find_node_at(const wf::pointf_t& at)
     return {};
 }
 
+void node_t::collect_visible_nodes(
+    std::vector<node_t*>& nodes, wf::geometry_t region)
+{
+    // The default node_t implementation is not visible.
+    for (auto& node : this->get_children())
+    {
+        node->collect_visible_nodes(nodes, region);
+    }
+}
+
 static std::vector<node_t*> extract_structure_nodes(
     const std::vector<node_ptr>& list)
 {
@@ -292,6 +302,18 @@ std::optional<input_node_t> output_node_t::find_node_at(const wf::pointf_t& at)
     }
 
     return node_t::find_node_at(at);
+}
+
+void output_node_t::collect_visible_nodes(
+    std::vector<node_t*>& nodes, wf::geometry_t region)
+{
+    if (this->limit_region)
+    {
+        region = wf::geometry_intersection(region, *this->limit_region);
+    }
+
+    region = region + -wf::origin(output->get_layout_geometry());
+    return node_t::collect_visible_nodes(nodes, region);
 }
 
 class output_render_instance_t : public default_render_instance_t

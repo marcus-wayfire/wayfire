@@ -59,6 +59,34 @@ std::optional<wf::scene::input_node_t> wf::scene::view_node_t::find_node_at(
     return floating_inner_node_t::find_node_at(at);
 }
 
+void wf::scene::view_node_t::collect_visible_nodes(
+    std::vector<node_t*>& nodes, wf::geometry_t region)
+{
+    if (auto wo = view->get_output())
+    {
+        auto g = view->get_output()->get_relative_geometry();
+        if (view->sticky)
+        {
+            region.x = (region.x % g.width + g.width) % g.width;
+            region.y = (region.y % g.height + g.height) % g.height;
+        }
+    }
+
+    bool visible = false;
+    if (view->has_transformer())
+    {
+        visible = view->intersects_region(region);
+    } else
+    {
+        visible = region & view->get_wm_geometry();
+    }
+
+    if (visible)
+    {
+        nodes.push_back(this);
+    }
+}
+
 namespace wf
 {
 namespace scene

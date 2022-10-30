@@ -130,6 +130,20 @@ class node_t : public std::enable_shared_from_this<node_t>,
     virtual std::optional<input_node_t> find_node_at(const wf::pointf_t& at);
 
     /**
+     * Find all nodes which are visible to the user in the given region.
+     * Here, 'visible to the user' is to be understood as nodes that the user
+     * can interact with, be it with keyboard, pointer, etc. input or nodes
+     * which have visual content.
+     *
+     * @param nodes A (partial during the operation) list of visible nodes,
+     *   sorted front-to-back.
+     * @param region The geometry in which nodes should be gathered, in the
+     *   coordinate system the node resides in.
+     */
+    virtual void collect_visible_nodes(
+        std::vector<node_t*>& nodes, wf::geometry_t region);
+
+    /**
      * Convert a point from the coordinate system the node resides in, to the
      * coordinate system of its children.
      *
@@ -359,6 +373,8 @@ class output_node_t final : public floating_inner_node_t
 
     wf::geometry_t get_bounding_box() override;
     std::optional<input_node_t> find_node_at(const wf::pointf_t& at) override;
+    void collect_visible_nodes(
+        std::vector<node_t*>& nodes, wf::geometry_t region) override;
 
     /**
      * Get the output this node is responsible for.

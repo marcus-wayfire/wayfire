@@ -42,10 +42,10 @@
 			<_long>Duration of the transition of brightness when a new workspace is selected in milliseconds.</_long>
 			<default>200</default>
 		</option>
-		<option name="workspace_bindings" type="dynamic-list">
+		<option name="workspace_bindings" type="dynamic-list" type-hint="dict">
 			<_short>Select workspace</_short>
 			<_long>When the binding is triggered while expo is active, the corresponding workspace will be focused and Expo will exit.</_long>
-      <entry prefix="select_workspace_" type="activator"/>
+			<entry prefix="select_workspace_" type="activator"/>
 		</option>
 	</plugin>
 </wayfire>

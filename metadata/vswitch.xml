@@ -80,7 +80,7 @@
 			<default></default>
 		</option>
 
-		<option name="workspace_bindings" type="dynamic-list">
+		<option name="workspace_bindings" type="dynamic-list" type-hint="dict">
 			<_short>Go-To-Workspace bindings</_short>
 			<_long>Go-To-Workspace bindings</_long>
 			<entry prefix="binding_" type="activator">
@@ -89,7 +89,7 @@
 			</entry>
 		</option>
 
-		<option name="workspace_bindings_win" type="dynamic-list">
+		<option name="workspace_bindings_win" type="dynamic-list" type-hint="dict">
 			<_short>Go-To-Workspace with window bindings</_short>
 			<_long>Go-To-Workspace with window bindings</_long>
 			<entry prefix="with_win_" type="activator">
@@ -98,7 +98,7 @@
 			</entry>
 		</option>
 
-		<option name="bindings_win" type="dynamic-list">
+		<option name="bindings_win" type="dynamic-list" type-hint="dict">
 			<_short>Go-To-Workspace with window bindings</_short>
 			<_long>Go-To-Workspace with window bindings</_long>
 			<entry prefix="send_win_" type="activator">

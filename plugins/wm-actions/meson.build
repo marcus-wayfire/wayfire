@@ -4,3 +4,5 @@ wm_actions = shared_module('wm-actions',
                            dependencies: [wlroots, pixman, wfconfig],
                            install: true,
                            install_dir: join_paths(get_option('libdir'), 'wayfire'))
+
+install_headers( [ 'wm-actions-signals.hpp' ], subdir: 'wayfire/plugins' )

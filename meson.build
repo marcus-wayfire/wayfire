@@ -53,11 +53,11 @@ endif
 
 # We're not to use system wlroots: So we'll use the subproject
 if get_option('use_system_wfconfig').disabled()
-	use_system_wfconfig = true
+	use_system_wfconfig = false
 	wfconfig = subproject('wf-config').get_variable('wfconfig')
 
 elif get_option('use_system_wfconfig').enabled()
-	use_system_wfconfig = false
+	use_system_wfconfig = true
 	wfconfig = dependency('wf-config', version: ['>=0.16.0', '<0.17.0'], required: true)
 
 elif get_option('use_system_wfconfig').auto()

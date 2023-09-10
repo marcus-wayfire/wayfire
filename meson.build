@@ -63,7 +63,7 @@ elif get_option('use_system_wfconfig').enabled()
 elif get_option('use_system_wfconfig').auto()
 	wfconfig = dependency('wf-config', version: ['>=0.8.0', '<0.9.0'], required: false)
 	use_system_wfconfig = true
-	if not wlroots.found()
+	if not wfconfig.found()
 		use_system_wfconfig = false
 		wfconfig = subproject('wf-config').get_variable('wfconfig')
 	endif

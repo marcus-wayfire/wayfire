@@ -230,13 +230,21 @@ struct workspace_set_t::impl
             auto wm  = view->get_geometry();
             float px = 1. * wm.x / old_w;
             float py = 1. * wm.y / old_h;
-            float pw = 1. * wm.width / old_w;
-            float ph = 1. * wm.height / old_h;
 
-            view->set_geometry({
-                    int(px * new_geometry.width), int(py * new_geometry.height),
-                    int(pw * new_geometry.width), int(ph * new_geometry.height)
-                });
+            if (view->get_output() && view->toplevel()->current().fullscreen)
+            {
+                view->set_geometry( new_geometry );
+            } else if (view->toplevel()->current().tiled_edges)
+            {
+                // Do nothing. This is taken care of, by the grid plugin.
+                // If the user does not have grid enabled, we ignore it anyways.
+            } else
+            {
+                view->set_geometry({
+                        int(px * new_geometry.width), int(py * new_geometry.height),
+                        wm.width, wm.height
+                    });
+            }
         }
 
         workspace_geometry = new_geometry;

@@ -233,7 +233,7 @@ struct workspace_set_t::impl
 
             if (view->get_output() && view->toplevel()->current().fullscreen)
             {
-                view->set_geometry( new_geometry );
+                view->set_geometry(new_geometry);
             } else if (view->toplevel()->current().tiled_edges)
             {
                 // Do nothing. This is taken care of, by the grid plugin.

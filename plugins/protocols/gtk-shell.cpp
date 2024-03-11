@@ -59,7 +59,6 @@ static void handle_gtk_surface_set_modal(wl_client *client, wl_resource *resourc
     wayfire_view view = wf::wl_surface_to_wayfire_view(surface->wl_surface);
     if (view)
     {
-        LOGE("[GtkShell] Modal ", view->get_app_id(), " ", view->get_title());
         view->store_data(std::make_unique<wf::custom_data_t>(), "gtk-shell-modal");
     }
 }
@@ -76,7 +75,6 @@ static void handle_gtk_surface_unset_modal(wl_client *client, wl_resource *resou
     wayfire_view view = wf::wl_surface_to_wayfire_view(surface->wl_surface);
     if (view)
     {
-        LOGE("[GtkShell] Modal ", view->get_app_id(), " ", view->get_title());
         view->erase_data("gtk-shell-modal");
     }
 }
@@ -97,7 +95,6 @@ static void handle_gtk_surface_present(wl_client *client, wl_resource *resource,
     wayfire_toplevel_view view = toplevel_cast(wf::wl_surface_to_wayfire_view(surface->wl_surface));
     if (view)
     {
-        LOGE("[GtkShell] Self focus", view->get_app_id(), " ", view->get_title());
         wf::get_core().default_wm->focus_request(view, true);
     }
 }
@@ -116,7 +113,6 @@ static void handle_gtk_surface_request_focus(struct wl_client *client,
     wayfire_toplevel_view view = toplevel_cast(wf::wl_surface_to_wayfire_view(surface->wl_surface));
     if (view)
     {
-        LOGE("[GtkShell] Self focus", view->get_app_id(), " ", view->get_title());
         wf::get_core().default_wm->focus_request(view, true);
     }
 }
@@ -259,7 +255,6 @@ static void handle_gtk_shell_get_gtk_surface(wl_client *client, wl_resource *res
     wlr_surface *wlr_surface = wlr_surface_from_resource(surface);
     if (wlr_xdg_surface *xdg_surface = wlr_xdg_surface_try_from_wlr_surface(wlr_surface))
     {
-        LOGE("[GtkShell] Configuring xdg_surface");
         gtk_surface->on_configure.set_callback([=] (void*)
         {
             handle_xdg_surface_on_configure(gtk_surface);
@@ -345,7 +340,6 @@ class wayfire_gtk_shell_impl : public wf::plugin_interface_t
     {
         auto display = wf::get_core().display;
         wl_global_create(display, &gtk_shell1_interface, GTK_SHELL_VERSION, NULL, bind_gtk_shell1);
-        LOGE("[GtkShell] Binding Gtk Shell ", GTK_SHELL_VERSION, " ", gtk_shell1_interface.name);
         wf::get_core().connect(&on_app_id_query);
     }
 

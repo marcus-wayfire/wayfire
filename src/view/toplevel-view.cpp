@@ -113,6 +113,7 @@ void wf::toplevel_view_interface_t::set_toplevel_parent(wayfire_toplevel_view ne
 
         parent = new_parent;
         view_parent_changed_signal ev;
+        ev.view = {this};
         this->emit(&ev);
     }
 
@@ -268,6 +269,7 @@ void wf::toplevel_view_interface_t::set_activated(bool active)
 {
     activated = active;
     view_activated_state_signal ev;
+    ev.view = {this};
     this->emit(&ev);
 }
 

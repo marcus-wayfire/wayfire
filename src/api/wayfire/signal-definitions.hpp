@@ -468,7 +468,9 @@ struct view_set_output_signal
  * when: After the view's parent changes.
  */
 struct view_parent_changed_signal
-{};
+{
+    wayfire_toplevel_view view;
+};
 
 /**
  * on: view, output(view-)
@@ -504,7 +506,9 @@ struct view_minimize_request_signal
  * when: After the view's activated state changes.
  */
 struct view_activated_state_signal
-{};
+{
+    wayfire_toplevel_view view;
+};
 
 /**
  * on: view, output(view-)

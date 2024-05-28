@@ -74,11 +74,20 @@ class ipc_activator_t
     {
         WFJSON_OPTIONAL_FIELD(data, "output_id", number_integer);
         WFJSON_OPTIONAL_FIELD(data, "view_id", number_integer);
+        WFJSON_OPTIONAL_FIELD(data, "output-id", number_integer);
+        WFJSON_OPTIONAL_FIELD(data, "view-id", number_integer);
 
         wf::output_t *wo = wf::get_core().seat->get_active_output();
         if (data.contains("output_id"))
         {
             wo = ipc::find_output_by_id(data["output_id"]);
+            if (!wo)
+            {
+                return ipc::json_error("output id not found!");
+            }
+        } else if (data.contains("output-id"))
+        {
+            wo = ipc::find_output_by_id(data["output-id"]);
             if (!wo)
             {
                 return ipc::json_error("output id not found!");
@@ -89,6 +98,13 @@ class ipc_activator_t
         if (data.contains("view_id"))
         {
             view = ipc::find_view_by_id(data["view_id"]);
+            if (!view)
+            {
+                return ipc::json_error("view id not found!");
+            }
+        } else if (data.contains("view-id"))
+        {
+            view = ipc::find_view_by_id(data["view-id"]);
             if (!view)
             {
                 return ipc::json_error("view id not found!");

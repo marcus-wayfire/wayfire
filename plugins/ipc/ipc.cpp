@@ -327,6 +327,7 @@ class ipc_plugin_t : public wf::plugin_interface_t
         char *pre_socket  = getenv("_WAYFIRE_SOCKET");
         const auto& dname = wf::get_core().wayland_display;
         pid_t pid = getpid();
+        const char *runtime_dir = getenv("XDG_RUNTIME_DIR");
 
         std::string socket;
         if (pre_socket)

@@ -1,3 +1,4 @@
+#include <list>
 #include "wayfire/bindings.hpp"
 #include "wayfire/object.hpp"
 #include "wayfire/seat.hpp"

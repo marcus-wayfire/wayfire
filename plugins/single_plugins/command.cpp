@@ -3,6 +3,7 @@
 #include "wayfire/plugins/common/shared-core-data.hpp"
 #include "wayfire/signal-provider.hpp"
 #include <cstdint>
+#include <list>
 #include <wayfire/config/option-types.hpp>
 #include <wayfire/config/types.hpp>
 #include <wayfire/per-output-plugin.hpp>

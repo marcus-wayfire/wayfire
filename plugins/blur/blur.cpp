@@ -1,5 +1,6 @@
 #include <wayfire/per-output-plugin.hpp>
 #include <memory>
+#include <list>
 #include <wayfire/config/types.hpp>
 #include <wayfire/plugin.hpp>
 #include <wayfire/view.hpp>

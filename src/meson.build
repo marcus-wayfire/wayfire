@@ -159,6 +159,7 @@ pkgconfig.generate(
     name:         meson.project_name(),
     description: 'A Wayland Compositor',
     requires:     public_api_requirements,
+    subdirs:     'wayfire',
     variables:    ['metadatadir=${prefix}/' + metadata_dir_suffix,
                    'sysconfdir=' + sysconfdir,
                    'plugindir=${libdir}/wayfire',

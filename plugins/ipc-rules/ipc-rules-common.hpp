@@ -1,5 +1,5 @@
 #pragma once
-#include "wayfire/plugins/ipc/ipc-helpers.hpp"
+#include "plugins/ipc/ipc-helpers.hpp"
 #include <wayfire/output.hpp>
 #include <wayfire/workarea.hpp>
 #include <wayfire/workspace-set.hpp>

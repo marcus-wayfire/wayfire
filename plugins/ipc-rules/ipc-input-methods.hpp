@@ -1,6 +1,6 @@
 #pragma once
-#include "plugins/ipc/ipc-helpers.hpp"
-#include "plugins/ipc/ipc-method-repository.hpp"
+#include "wayfire/plugins/ipc/ipc-helpers.hpp"
+#include "wayfire/plugins/ipc/ipc-method-repository.hpp"
 #include "wayfire/core.hpp"
 #include "wayfire/debug.hpp"
 #include <wayfire/input-device.hpp>

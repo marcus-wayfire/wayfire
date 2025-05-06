@@ -1,5 +1,5 @@
-#include "ipc-helpers.hpp"
-#include "ipc-method-repository.hpp"
+#include "wayfire/plugins/ipc/ipc-helpers.hpp"
+#include "wayfire/plugins/ipc/ipc-method-repository.hpp"
 #include "wayfire/plugin.hpp"
 #include "wayfire/plugins/common/shared-core-data.hpp"
 #include "wayfire/toplevel-view.hpp"

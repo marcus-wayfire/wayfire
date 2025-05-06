@@ -4,9 +4,9 @@
 #include <wayfire/workspace-set.hpp>
 #include <wayfire/util/log.hpp>
 #include "plugins/common/wayfire/plugins/common/shared-core-data.hpp"
-#include "plugins/ipc/ipc-method-repository.hpp"
-#include "plugins/ipc/ipc-helpers.hpp"
-#include "plugins/ipc/ipc-activator.hpp"
+#include "wayfire/plugins/ipc/ipc-method-repository.hpp"
+#include "wayfire/plugins/ipc/ipc-helpers.hpp"
+#include "wayfire/plugins/ipc/ipc-activator.hpp"
 #include "wayfire/core.hpp"
 #include "wayfire/plugin.hpp"
 #include "wayfire/scene-operations.hpp"

@@ -16,7 +16,7 @@
 
 #include <wayfire/plugins/wobbly/wobbly-signal.hpp>
 #include <wayfire/view-transform.hpp>
-#include "plugins/ipc/ipc-activator.hpp"
+#include "wayfire/plugins/ipc/ipc-activator.hpp"
 #include "wayfire/signal-provider.hpp"
 
 const std::string grid_view_id = "grid-view";

@@ -1,7 +1,7 @@
 #pragma once
 #include "config.h"
 #include "ipc-rules-common.hpp"
-#include "plugins/ipc/ipc-method-repository.hpp"
+#include "wayfire/plugins/ipc/ipc-method-repository.hpp"
 #include "wayfire/debug.hpp"
 #include <set>
 #include <wayfire/plugin.hpp>

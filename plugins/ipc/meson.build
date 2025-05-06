@@ -1,6 +1,6 @@
 evdev = dependency('libevdev')
 
-ipc_include_dirs = include_directories('.')
+ipc_include_dirs = include_directories('.', 'wayfire/plugins/ipc')
 
 ipc = shared_module('ipc',
     ['ipc.cpp'],
@@ -16,4 +16,4 @@ stipc = shared_module('stipc',
     install: true,
     install_dir: conf_data.get('PLUGIN_PATH'))
 
-install_headers(['ipc-method-repository.hpp', 'ipc-helpers.hpp', 'ipc-activator.hpp'], subdir: 'wayfire/plugins/ipc')
+install_headers(['wayfire/plugins/ipc/ipc-method-repository.hpp', 'wayfire/plugins/ipc/ipc-helpers.hpp', 'wayfire/plugins/ipc/ipc-activator.hpp'], subdir: 'wayfire/plugins/ipc')

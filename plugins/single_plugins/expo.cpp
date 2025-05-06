@@ -1,6 +1,6 @@
 #include "wayfire/plugins/common/input-grab.hpp"
 #include "wayfire/plugins/common/util.hpp"
-#include "plugins/ipc/ipc-activator.hpp"
+#include "wayfire/plugins/ipc/ipc-activator.hpp"
 #include "wayfire/render-manager.hpp"
 #include "wayfire/scene-input.hpp"
 #include "wayfire/scene.hpp"

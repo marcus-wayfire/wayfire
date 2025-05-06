@@ -8,7 +8,7 @@
 #include <wayfire/signal-definitions.hpp>
 #include <wayfire/toplevel-view.hpp>
 
-#include "plugins/ipc/ipc-method-repository.hpp"
+#include "wayfire/plugins/ipc/ipc-method-repository.hpp"
 #include "tree-controller.hpp"
 #include "tree.hpp"
 #include "wayfire/debug.hpp"

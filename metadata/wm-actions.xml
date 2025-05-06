@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <wayfire>
 	<plugin name="wm-actions">
 		<_short>WM Actions</_short>
@@ -22,6 +22,16 @@
 		<option name="toggle_maximize" type="activator">
 			<_short>Toggle Maximize</_short>
 			<_long>Toggle the maximize state of the active view.</_long>
+			<default>disabled</default>
+		</option>
+		<option name="toggle_maximize_horizontal" type="activator">
+			<_short>Toggle Maximize Horizontally</_short>
+			<_long>Horizontally maximize/restore active view.</_long>
+			<default>disabled</default>
+		</option>
+		<option name="toggle_maximize_vertical" type="activator">
+			<_short>Toggle Maximize Vertically</_short>
+			<_long>Vertically maximize/restore active view.</_long>
 			<default>disabled</default>
 		</option>
 		<option name="minimize" type="activator">

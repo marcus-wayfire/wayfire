@@ -40,6 +40,10 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         "wm-actions/minimize"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_maximize{
         "wm-actions/toggle_maximize"};
+    wf::option_wrapper_t<wf::activatorbinding_t> toggle_maximize_horizontal{
+        "wm-actions/toggle_maximize_horizontal"};
+    wf::option_wrapper_t<wf::activatorbinding_t> toggle_maximize_vertical{
+        "wm-actions/toggle_maximize_vertical"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_above{
         "wm-actions/toggle_always_on_top"};
     wf::option_wrapper_t<wf::activatorbinding_t> toggle_fullscreen{
@@ -248,6 +252,26 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         });
     };
 
+    wf::activator_callback on_toggle_maximize_horizontal = [=] (auto ev) -> bool
+    {
+        return execute_for_selected_view(ev.source, [] (wayfire_toplevel_view view)
+        {
+            wf::get_core().default_wm->tile_request(view,
+                view->pending_tiled_edges() == (WLR_EDGE_LEFT | WLR_EDGE_RIGHT) ? 0 : (WLR_EDGE_LEFT | WLR_EDGE_RIGHT));
+            return true;
+        });
+    };
+
+    wf::activator_callback on_toggle_maximize_vertical = [=] (auto ev) -> bool
+    {
+        return execute_for_selected_view(ev.source, [] (wayfire_toplevel_view view)
+        {
+            wf::get_core().default_wm->tile_request(view,
+                view->pending_tiled_edges() == (WLR_EDGE_TOP | WLR_EDGE_BOTTOM) ? 0 : WLR_EDGE_TOP | WLR_EDGE_BOTTOM);
+            return true;
+        });
+    };
+
     wf::activator_callback on_toggle_fullscreen = [=] (auto ev) -> bool
     {
         return execute_for_selected_view(ev.source, [] (wayfire_toplevel_view view)
@@ -365,6 +389,8 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         wf::scene::add_front(wf::get_core().scene()->layers[(int)wf::scene::layer::WORKSPACE], always_above);
         output->add_activator(minimize, &on_minimize);
         output->add_activator(toggle_maximize, &on_toggle_maximize);
+        output->add_activator(toggle_maximize_horizontal, &on_toggle_maximize_horizontal);
+        output->add_activator(toggle_maximize_vertical, &on_toggle_maximize_vertical);
         output->add_activator(toggle_above, &on_toggle_above);
         output->add_activator(toggle_fullscreen, &on_toggle_fullscreen);
         output->add_activator(toggle_sticky, &on_toggle_sticky);
@@ -387,6 +413,8 @@ class wayfire_wm_actions_output_t : public wf::per_output_plugin_instance_t
         wf::scene::remove_child(always_above);
         output->rem_binding(&on_minimize);
         output->rem_binding(&on_toggle_maximize);
+        output->rem_binding(&on_toggle_maximize_horizontal);
+        output->rem_binding(&on_toggle_maximize_vertical);
         output->rem_binding(&on_toggle_above);
         output->rem_binding(&on_toggle_fullscreen);
         output->rem_binding(&on_toggle_sticky);
@@ -405,6 +433,7 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
     {
         init_output_tracking();
         ipc_repo->register_method("wm-actions/set-minimized", ipc_minimize);
+        ipc_repo->register_method("wm-actions/set-tiled", ipc_tiled);
         ipc_repo->register_method("wm-actions/set-always-on-top", ipc_set_always_on_top);
         ipc_repo->register_method("wm-actions/set-fullscreen", ipc_set_fullscreen);
         ipc_repo->register_method("wm-actions/set-sticky", ipc_set_sticky);
@@ -416,6 +445,7 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
     {
         fini_output_tracking();
         ipc_repo->unregister_method("wm-actions/set-minimized");
+        ipc_repo->unregister_method("wm-actions/set-tiled");
         ipc_repo->unregister_method("wm-actions/set-always-on-top");
         ipc_repo->unregister_method("wm-actions/set-fullscreen");
         ipc_repo->unregister_method("wm-actions/set-sticky");
@@ -445,12 +475,19 @@ class wayfire_wm_actions_t : public wf::plugin_interface_t,
         });
     };
 
-    wf::ipc::method_callback ipc_maximize = [=] (const wf::json_t& js)
+    wf::ipc::method_callback ipc_tiled = [=] (const wf::json_t& js)
     {
-        return execute_for_view(js, [=] (wayfire_toplevel_view view, bool state)
+        uint64_t view_id = wf::ipc::json_get_uint64(js, "view_id");
+        wayfire_toplevel_view view = toplevel_cast(wf::ipc::find_view_by_id(view_id));
+        if (!view)
         {
-            wf::get_core().default_wm->tile_request(view, state ? wf::TILED_EDGES_ALL : 0);
-        });
+            return wf::ipc::json_error("toplevel view id not found!");
+        }
+
+        int64_t edges = wf::ipc::json_get_int64(js, "edges");
+        wf::get_core().default_wm->tile_request(view, WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
+
+        return wf::ipc::json_ok();
     };
 
     wf::ipc::method_callback ipc_set_always_on_top = [=] (const wf::json_t& js)

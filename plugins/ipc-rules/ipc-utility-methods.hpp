@@ -128,8 +128,6 @@ class ipc_rules_utility_methods_t
 
         if (compound_option)
         {
-            LOGE("=>>>>> getting compound option values");
-            const wf::config::compound_option_t::entries_t & entries = compound_option->get_entries();
             wf::config::compound_option_t::stored_type_t values = compound_option->get_value_untyped();
 
             auto values_json   = wf::json_t::array();

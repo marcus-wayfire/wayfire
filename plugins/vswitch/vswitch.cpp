@@ -656,7 +656,7 @@ class wf_vswitch_global_plugin_t : public wf::per_output_plugin_t<vswitch>
         wf::view_change_workspace_signal signal;
         signal.view = view;
         signal.from = wo->wset()->get_current_workspace();
-        signal.to   = {x, y};
+        signal.to   = {(int)x, (int)y};
 
         auto size  = wo->get_screen_size();
         auto delta = signal.to - signal.from;

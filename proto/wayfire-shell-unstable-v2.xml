@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <protocol name="wayfire_shell_unstable_v2">
   <interface name="zwf_shell_manager_v2" version="3">
     <description summary="DE integration">
@@ -9,15 +9,15 @@
     </description>
 
     <request name="get_wf_output">
-      <description summary="Create a zwf_output_v2 for the given wl_output" />
-      <arg name="output" type="object" interface="wl_output" />
-      <arg name="id" type="new_id" interface="zwf_output_v2" />
+      <description summary="Create a zwf_output_v2 for the given wl_output"/>
+      <arg name="output" type="object" interface="wl_output"/>
+      <arg name="id" type="new_id" interface="zwf_output_v2"/>
     </request>
 
     <request name="get_wf_surface">
-      <description summary="Create a zwf_surface_v2 for the given wl_surface" />
-      <arg name="surface" type="object" interface="wl_surface" />
-      <arg name="id" type="new_id" interface="zwf_surface_v2" />
+      <description summary="Create a zwf_surface_v2 for the given wl_surface"/>
+      <arg name="surface" type="object" interface="wl_surface"/>
+      <arg name="id" type="new_id" interface="zwf_surface_v2"/>
     </request>
   </interface>
 
@@ -65,10 +65,10 @@
     </request>
 
     <enum name="hotspot_edge">
-      <entry name="top" value="1" summary="Top edge of the output" />
-      <entry name="bottom" value="2" summary="Bottom edge of the output" />
-      <entry name="left" value="4" summary="Left edge of the output" />
-      <entry name="right" value="8" summary="Right edge of the output" />
+      <entry name="top" value="1" summary="Top edge of the output"/>
+      <entry name="bottom" value="2" summary="Bottom edge of the output"/>
+      <entry name="left" value="4" summary="Left edge of the output"/>
+      <entry name="right" value="8" summary="Right edge of the output"/>
     </enum>
 
     <request name="create_hotspot">
@@ -88,10 +88,10 @@
         'threshold' pixels by 'threshold' pixels triggers the hotspot.
       </description>
 
-      <arg name="hotspot" type="uint" summary="bitwise or of the edges (1-2 edges)" />
-      <arg name="threshold" type="uint" summary="distance from the edge or corner of the output in pixels" />
-      <arg name="timeout" type="uint" summary="minimum time for input to be in the hotspot (ms)" />
-      <arg name="id" type="new_id" interface="zwf_hotspot_v2" />
+      <arg name="hotspot" type="uint" summary="bitwise or of the edges (1-2 edges)"/>
+      <arg name="threshold" type="uint" summary="distance from the edge or corner of the output in pixels"/>
+      <arg name="timeout" type="uint" summary="minimum time for input to be in the hotspot (ms)"/>
+      <arg name="id" type="new_id" interface="zwf_hotspot_v2"/>
     </request>
 
     <!-- Version 2 additions -->
@@ -104,24 +104,38 @@
     </event>
 
     <!-- Version 3 additions -->
-    <request name="create_positioned_hotspot" since="3">
-      <description summary="Create a hotspot at a specific point on an edge">
-        Creates a hotspot at a specific point along a single output edge.
-        The hotspot is a semicircular region that extends inward from the edge.
+    <request name="create_custom_hotspot" since="3">
+      <description summary="Create an arbitrary rectangular hotspot">
+        Creates a hotspot for an arbitrary axis-aligned rectangle on the output.
+        The rectangle is defined in output-local coordinates with (x, y) as the
+        top-left corner, and (w, h) as width and height.
 
-        The edge parameter must contain exactly one edge (top/bottom/left/right).
+        The hotspot activates when the input pointer comes within 'threshold'
+        pixels of any point on the rectangle's boundary. The proximity event
+        reports the exact distance (0 to threshold) from the pointer to the
+        nearest point on the rectangle boundary.
 
-        For left/right edges: position is measured in pixels from the top edge.
-        For top/bottom edges: position is measured in pixels from the left edge.
+        This is a generalization of edge and corner hotspots:
+        - A top edge hotspot is a rectangle covering the entire top edge
+          with w = output.width, h = threshold, positioned at (0, 0)
+        - A corner hotspot is a square of size threshold x threshold
+          positioned at the output corner
 
-        If position exceeds the edge length, it is clamped to the edge length.
-        The radius defines the size of the semicircular hotspot region.
+        Use cases include:
+        - Trigger zones that aren't aligned to output edges
+        - Complex panel layouts where activation regions are around specific UI elements
+        - Desktop widgets that expand/collapse based on pointer approach
+
+        Note: The rectangle should be within the output bounds. The compositor
+        may clamp it to output geometry or ignore rectangles entirely outside.
       </description>
-      <arg name="edge" type="uint" summary="Exactly one of top/bottom/left/right" />
-      <arg name="position" type="uint" summary="Pixel position along the edge" />
-      <arg name="Threshold" type="uint" summary="Radius of semicircle in pixels" />
-      <arg name="timeout" type="uint" summary="Timeout in milliseconds" />
-      <arg name="id" type="new_id" interface="zwf_hotspot_v2" />
+      <arg name="x" type="uint" summary="X position of rectangle (output-local)"/>
+      <arg name="y" type="uint" summary="Y position of rectangle (output-local)"/>
+      <arg name="width" type="uint" summary="Width of rectangle in pixels"/>
+      <arg name="height" type="uint" summary="Height of rectangle in pixels"/>
+      <arg name="threshold" type="uint" summary="Distance from rectangle boundary that triggers hotspot"/>
+      <arg name="timeout" type="uint" summary="Timeout in milliseconds"/>
+      <arg name="id" type="new_id" interface="zwf_hotspot_v2"/>
     </request>
   </interface>
 
@@ -193,14 +207,14 @@
         motion events to ensure smooth animations.
       </description>
 
-      <arg name="proximity" type="uint" summary="Distance in pixels from trigger point (0 = at trigger, threshold = at edge)" />
+      <arg name="proximity" type="uint" summary="Distance in pixels from trigger point (0 = at trigger, threshold = at edge)"/>
     </event>
   </interface>
 
   <interface name="zwf_surface_v2" version="3">
-    <description summary="A special surface" />
+    <description summary="A special surface"/>
     <request name="interactive_move">
-      <description summary="Start an interactive move of the surface" />
+      <description summary="Start an interactive move of the surface"/>
     </request>
   </interface>
 

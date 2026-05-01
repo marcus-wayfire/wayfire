@@ -26,8 +26,8 @@ static void handle_hotspot_destroy(wl_resource *resource);
 class wfs_hotspot
 {
   private:
+    wf::geometry_t trigger;
     wf::geometry_t hotspot_geometry;
-    wf::point_t trigger = {-1, -1}; // (-1,-1) means not a positioned hotspot
 
     uint32_t threshold;
     bool hotspot_triggered = false;
@@ -99,81 +99,73 @@ class wfs_hotspot
         }
     }
 
-    wf::geometry_t calculate_hotspot_geometry(wf::output_t *output,
-        uint32_t edge_mask, uint32_t distance) const
+    wf::geometry_t calculate_hotspot_geometry(wf::output_t *output, const wf::geometry_t& trigger_rect,
+        uint32_t threshold) const
     {
-        wf::geometry_t slot = output->get_layout_geometry();
-        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_TOP)
-        {
-            slot.height = distance;
-        } else if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM)
-        {
-            slot.y += slot.height - distance;
-            slot.height = distance;
-        }
+        // Get output geometry in global coordinates
+        wf::geometry_t output_geom = output->get_layout_geometry();
 
-        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_LEFT)
-        {
-            slot.width = distance;
-        } else if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_RIGHT)
-        {
-            slot.x    += slot.width - distance;
-            slot.width = distance;
-        }
+        // Expand core rectangle by threshold in all directions
+        wf::geometry_t expanded = {
+            trigger_rect.x - (int)threshold,
+            trigger_rect.y - (int)threshold,
+            trigger_rect.width + (int)threshold * 2,
+            trigger_rect.height + (int)threshold * 2
+        };
 
-        return slot;
+        // Clamp to output boundaries
+        wf::geometry_t result = wf::geometry_intersection(expanded, output_geom);
+
+        return result;
     }
 
     uint32_t calculate_proximity(const wf::point_t& cursor) const
     {
-        if ((trigger.x == -1) && (trigger.y == -1))
-        {
-            // Check each edge in the hotspot_geometry
-            // For edge hotspots, distance is perpendicular distance to that edge
-            // For corner hotspots, we need Euclidean distance to the corner
-            bool is_corner = (hotspot_geometry.width == (int)threshold &&
-                hotspot_geometry.height == (int)threshold);
+        const auto& rect = trigger;
+        int dx = 0, dy = 0;
 
-            if (is_corner)
-            {
-                // Corner hotspot: distance to the corner point
-                double dx = cursor.x - hotspot_geometry.x;
-                double dy = cursor.y - hotspot_geometry.y;
-                return std::min((uint32_t)std::sqrt(dx * dx + dy * dy), threshold);
-            } else
-            {
-                // Edge hotspot: perpendicular distance to the edge
-                if (hotspot_geometry.width == (int)threshold) // Top or bottom edge
-                {
-                    return std::min((uint32_t)std::abs(cursor.y - hotspot_geometry.y), threshold);
-                } else // Left or right edge
-                {
-                    return std::min((uint32_t)std::abs(cursor.x - hotspot_geometry.x), threshold);
-                }
-            }
+        if (cursor.x < rect.x)
+        {
+            dx = rect.x - cursor.x;
+        } else if ((rect.width > 0) && (cursor.x > rect.x + rect.width))
+        {
+            dx = cursor.x - (rect.x + rect.width);
+        }
+
+        if (cursor.y < rect.y)
+        {
+            dy = rect.y - cursor.y;
+        } else if ((rect.height > 0) && (cursor.y > rect.y + rect.height))
+        {
+            dy = cursor.y - (rect.y + rect.height);
+        }
+
+        // Inside the core rectangle
+        if ((dx == 0) && (dy == 0))
+        {
+            return 0;
+        }
+
+        // Euclidean distance to corner
+        if ((dx > 0) && (dy > 0))
+        {
+            return std::min((uint32_t)std::sqrt(dx * dx + dy * dy), threshold);
         } else
         {
-            // Positioned hotspot: Euclidean distance to trigger point
-            double dx = cursor.x - trigger.x;
-            double dy = cursor.y - trigger.y;
-            uint32_t distance = (uint32_t)std::sqrt(dx * dx + dy * dy);
-            return std::min(distance, threshold);
+            return std::min((uint32_t)(dx + dy), threshold);
         }
     }
 
     bool is_cursor_in_hotspot(const wf::point_t& cursor) const
     {
-        if ((trigger.x == -1) && (trigger.y == -1))
+        // Quick rejection using bounding box
+        if (!(hotspot_geometry & cursor))
         {
-            // Legacy edge/corner: rectangle containment
-            return (hotspot_geometry & cursor);
-        } else
-        {
-            // Positioned: Euclidean distance check to trigger point
-            double dx = cursor.x - trigger.x;
-            double dy = cursor.y - trigger.y;
-            return (dx * dx + dy * dy) <= (threshold * threshold);
+            return false;
         }
+
+        // Exact distance check
+        return calculate_proximity(cursor) <= threshold;
     }
 
     void send_proximity_if_needed(const wf::point_t& cursor)
@@ -190,82 +182,35 @@ class wfs_hotspot
         }
     }
 
-    wfs_hotspot(const wfs_hotspot &) = delete;
-    wfs_hotspot(wfs_hotspot &&) = delete;
+    wfs_hotspot(const wfs_hotspot&) = delete;
+    wfs_hotspot(wfs_hotspot&&) = delete;
     wfs_hotspot& operator =(const wfs_hotspot&) = delete;
     wfs_hotspot& operator =(wfs_hotspot&&) = delete;
 
   public:
+
     /**
      * Create a new hotspot.
      * It is guaranteedd that edge_mask contains at most 2 non-opposing edges.
      */
-    wfs_hotspot(wf::output_t *output, uint32_t edge_mask, uint32_t threshold, uint32_t timeout,
-        wl_client *client, uint32_t id, uint32_t position = UINT32_MAX)
+    wfs_hotspot(wf::output_t *output, wf::geometry_t trigger, uint32_t threshold, uint32_t timeout,
+        wl_client *client, uint32_t id) : trigger(trigger), threshold(threshold), timeout_ms(timeout)
     {
-        this->threshold  = threshold;
-        this->timeout_ms = timeout;
+        // Calculate expanded bounding box
+        this->hotspot_geometry = calculate_hotspot_geometry(output, trigger, threshold);
 
+        // Create resource and setup signals (same as before)
         hotspot_resource = wl_resource_create(client, &zwf_hotspot_v2_interface, 3, id);
-        wl_resource_set_implementation(hotspot_resource, NULL, this,
-            handle_hotspot_destroy);
+        wl_resource_set_implementation(hotspot_resource, NULL, this, handle_hotspot_destroy);
 
-        wf::geometry_t output_geom = output->get_layout_geometry();
-
-        if (position == UINT32_MAX)
-        {
-            // Legacy edge/corner hotspot
-            this->hotspot_geometry = calculate_hotspot_geometry(output, edge_mask, threshold);
-            // trigger remains (-1, -1)
-        } else
-        {
-            // Positioned hotspot (single edge)
-            // Validate edge_mask is a single edge
-            if ((edge_mask == 0) || ((edge_mask & (edge_mask - 1)) != 0))
-            {
-                // Create dummy resource on error
-                hotspot_resource = wl_resource_create(client, &zwf_hotspot_v2_interface, 3, id);
-                wl_resource_set_implementation(hotspot_resource, NULL, NULL, NULL);
-                return;
-            }
-
-            // Calculate trigger point
-            if (edge_mask == ZWF_OUTPUT_V2_HOTSPOT_EDGE_TOP)
-            {
-                trigger.x = output_geom.x + std::min(position, (uint32_t)output_geom.width - 1);
-                trigger.y = output_geom.y;
-            } else if (edge_mask == ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM)
-            {
-                trigger.x = output_geom.x + std::min(position, (uint32_t)output_geom.width - 1);
-                trigger.y = output_geom.y + output_geom.height - 1;
-            } else if (edge_mask == ZWF_OUTPUT_V2_HOTSPOT_EDGE_LEFT)
-            {
-                trigger.x = output_geom.x;
-                trigger.y = output_geom.y + std::min(position, (uint32_t)output_geom.height - 1);
-            } else if (edge_mask == ZWF_OUTPUT_V2_HOTSPOT_EDGE_RIGHT)
-            {
-                trigger.x = output_geom.x + output_geom.width - 1;
-                trigger.y = output_geom.y + std::min(position, (uint32_t)output_geom.height - 1);
-            }
-
-            // Bounding box for quick rejection
-            this->hotspot_geometry = {
-                (int)trigger.x - (int)threshold,
-                (int)trigger.y - (int)threshold,
-                (int)threshold * 2,
-                (int)threshold * 2
-            };
-        }
-
-        // setup output destroy listener
+        // output destroy handler
         on_output_removed.set_callback([this, output] (wf::output_removed_signal *ev)
         {
             if (ev->output == output)
             {
-                /* Make hotspot inactive by setting the region to empty */
-                hotspot_geometry = {0, 0, 0, 0};
-                trigger = {-1, -1};
-                process_input_motion({0, 0});
+                this->hotspot_geometry = {0, 0, 0, 0};
+                this->trigger = {0, 0, 0, 0};
+                process_input_motion({-1, -1});
             }
         });
 
@@ -281,6 +226,7 @@ class wfs_hotspot
 static void handle_hotspot_destroy(wl_resource *resource)
 {
     auto *hotspot = (wfs_hotspot*)wl_resource_get_user_data(resource);
+
     delete hotspot;
 
     wl_resource_set_user_data(resource, nullptr);
@@ -289,18 +235,18 @@ static void handle_hotspot_destroy(wl_resource *resource)
 /* ------------------------------ wfs_output -------------------------------- */
 static void handle_output_destroy(wl_resource *resource);
 static void handle_zwf_output_inhibit_output(wl_client*, wl_resource *resource);
-static void handle_zwf_output_inhibit_output_done(wl_client*,
-    wl_resource *resource);
-static void handle_zwf_output_create_hotspot(wl_client*, wl_resource *resource,
-    uint32_t hotspot, uint32_t threshold, uint32_t timeout, uint32_t id);
-static void handle_zwf_output_create_positioned_hotspot(wl_client*, wl_resource *resource,
-    uint32_t edge, uint32_t position, uint32_t radius, uint32_t timeout, uint32_t id);
+static void handle_zwf_output_inhibit_output_done(wl_client*, wl_resource *resource);
+static void handle_zwf_output_create_hotspot(wl_client*, wl_resource *resource, uint32_t hotspot,
+    uint32_t threshold, uint32_t timeout, uint32_t id);
+static void handle_zwf_output_create_custom_hotspot(wl_client*, wl_resource *resource, uint32_t x, uint32_t y,
+    uint32_t w, uint32_t h, uint32_t threshold,
+    uint32_t timeout, uint32_t id);
 
 static struct zwf_output_v2_interface zwf_output_impl = {
     .inhibit_output = handle_zwf_output_inhibit_output,
     .inhibit_output_done = handle_zwf_output_inhibit_output_done,
     .create_hotspot = handle_zwf_output_create_hotspot,
-    .create_positioned_hotspot = handle_zwf_output_create_positioned_hotspot,
+    .create_custom_hotspot = handle_zwf_output_create_custom_hotspot,
 };
 
 /**
@@ -382,8 +328,8 @@ class wfs_output
         disconnect_from_output();
     }
 
-    wfs_output(const wfs_output &) = delete;
-    wfs_output(wfs_output &&) = delete;
+    wfs_output(const wfs_output&) = delete;
+    wfs_output(wfs_output&&) = delete;
     wfs_output& operator =(const wfs_output&) = delete;
     wfs_output& operator =(wfs_output&&) = delete;
 
@@ -407,70 +353,136 @@ class wfs_output
         }
     }
 
-    void create_hotspot(uint32_t hotspot, uint32_t threshold, uint32_t timeout,
-        uint32_t id, uint32_t position = UINT32_MAX)
+    wf::geometry_t calculate_trigger_geometry(uint32_t edge_mask)
+    {
+        wf::geometry_t output_geom = this->output->get_layout_geometry();
+        int edge_count = 0;
+
+        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_TOP)
+        {
+            edge_count++;
+        }
+
+        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM)
+        {
+            edge_count++;
+        }
+
+        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_LEFT)
+        {
+            edge_count++;
+        }
+
+        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_RIGHT)
+        {
+            edge_count++;
+        }
+
+        if (edge_count == 1)
+        {
+            // Single edge: rectangle with zero thickness
+            if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_TOP)
+            {
+                return {output_geom.x, output_geom.y, output_geom.width, 0};
+            } else if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM)
+            {
+                return {output_geom.x, output_geom.y + output_geom.height - 1, output_geom.width, 0};
+            } else if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_LEFT)
+            {
+                return {output_geom.x, output_geom.y, 0, output_geom.height};
+            } else // RIGHT
+            {
+                return {output_geom.x + output_geom.width - 1, output_geom.y, 0, output_geom.height};
+            }
+        } else if (edge_count == 2)
+        {
+            // Corner: zero-area point at the corner
+            int x = output_geom.x;
+            int y = output_geom.y;
+
+            if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_RIGHT)
+            {
+                x = output_geom.x + output_geom.width - 1;
+            }
+
+            if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM)
+            {
+                y = output_geom.y + output_geom.height - 1;
+            }
+
+            return {x, y, 0, 0};
+        }
+
+        // Invalid
+        return {0, 0, 0, 0};
+    }
+
+    wf::geometry_t calculate_trigger_geometry(wf::geometry_t rect)
+    {
+        wf::geometry_t output_geom = this->output->get_layout_geometry();
+
+        wf::geometry_t trigger = {
+            output_geom.x + rect.x,
+            output_geom.y + rect.y,
+            rect.width,
+            rect.height
+        };
+
+        return trigger;
+    }
+
+    void create_hotspot(const wf::geometry_t& trigger_rect, uint32_t threshold, uint32_t timeout, uint32_t id)
     {
         if (!this->output)
         {
-            // It can happen that the client requests a hotspot immediately after an output is destroyed -
-            // this is an inherent race condition because the compositor and client are not in sync.
-            //
-            // In this case, we create a dummy hotspot resource to avoid Wayland protocol errors.
-            auto resource = wl_resource_create(
-                wl_resource_get_client(this->resource), &zwf_hotspot_v2_interface, 1, id);
+            auto resource = wl_resource_create(wl_resource_get_client(
+                this->resource), &zwf_hotspot_v2_interface, 3, id);
             wl_resource_set_implementation(resource, NULL, NULL, NULL);
             return;
         }
 
-        if (position != UINT32_MAX)
-        {
-            // Validate edge is a single edge
-            if ((hotspot == 0) || ((hotspot & (hotspot - 1)) != 0) ||
-                ((hotspot != ZWF_OUTPUT_V2_HOTSPOT_EDGE_TOP) &&
-                 (hotspot != ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM) &&
-                 (hotspot != ZWF_OUTPUT_V2_HOTSPOT_EDGE_LEFT) &&
-                 (hotspot != ZWF_OUTPUT_V2_HOTSPOT_EDGE_RIGHT)))
-            {
-                wl_resource_post_error(this->resource, 0, "Invalid edge for positioned hotspot");
-                return;
-            }
-        }
-
-        new wfs_hotspot(this->output, hotspot, threshold, timeout,
-            wl_resource_get_client(this->resource), id, position);
+        new wfs_hotspot(this->output, trigger_rect, threshold, timeout, wl_resource_get_client(
+            this->resource), id);
     }
 };
 
 static void handle_zwf_output_inhibit_output(wl_client*, wl_resource *resource)
 {
     auto output = (wfs_output*)wl_resource_get_user_data(resource);
+
     output->inhibit_output();
 }
 
-static void handle_zwf_output_inhibit_output_done(
-    wl_client*, wl_resource *resource)
+static void handle_zwf_output_inhibit_output_done(wl_client*, wl_resource *resource)
 {
     auto output = (wfs_output*)wl_resource_get_user_data(resource);
+
     output->inhibit_output_done();
 }
 
 static void handle_zwf_output_create_hotspot(wl_client*, wl_resource *resource,
-    uint32_t hotspot, uint32_t threshold, uint32_t timeout, uint32_t id)
+    uint32_t edge_mask, uint32_t threshold, uint32_t timeout, uint32_t id)
 {
     auto output = (wfs_output*)wl_resource_get_user_data(resource);
-    output->create_hotspot(hotspot, threshold, timeout, id);
+    wf::geometry_t trigger = output->calculate_trigger_geometry(edge_mask);
+
+    output->create_hotspot(trigger, threshold, timeout, id);
 }
 
-static void handle_zwf_output_create_positioned_hotspot(wl_client*, wl_resource *resource,
-    uint32_t edge, uint32_t position, uint32_t threshold, uint32_t timeout, uint32_t id)
+static void handle_zwf_output_create_custom_hotspot(wl_client*, wl_resource *resource,
+    uint32_t x, uint32_t y, uint32_t width, uint32_t height,
+    uint32_t threshold, uint32_t timeout, uint32_t id)
 {
     auto output = (wfs_output*)wl_resource_get_user_data(resource);
-    output->create_hotspot(edge, threshold, timeout, id, position);
+    wf::geometry_t trigger = output->calculate_trigger_geometry({(int)x, (int)y, (int)width, (int)height});
+
+    output->create_hotspot(trigger, threshold, timeout, id);
 }
 
 static void handle_output_destroy(wl_resource *resource)
 {
     auto *output = (wfs_output*)wl_resource_get_user_data(resource);
+
     delete output;
 
     wl_resource_set_user_data(resource, nullptr);
@@ -478,8 +490,7 @@ static void handle_output_destroy(wl_resource *resource)
 
 /* ------------------------------ wfs_surface ------------------------------- */
 static void handle_surface_destroy(wl_resource *resource);
-static void handle_zwf_surface_interactive_move(wl_client*,
-    wl_resource *resource);
+static void handle_zwf_surface_interactive_move(wl_client*, wl_resource *resource);
 
 static struct zwf_surface_v2_interface zwf_surface_impl = {
     .interactive_move = handle_zwf_surface_interactive_move,
@@ -518,18 +529,20 @@ class wfs_surface
 static void handle_zwf_surface_interactive_move(wl_client*, wl_resource *resource)
 {
     auto surface = (wfs_surface*)wl_resource_get_user_data(resource);
+
     surface->interactive_move();
 }
 
 static void handle_surface_destroy(wl_resource *resource)
 {
     auto surface = (wfs_surface*)wl_resource_get_user_data(resource);
+
     delete surface;
     wl_resource_set_user_data(resource, nullptr);
 }
 
-static void zwf_shell_manager_get_wf_output(wl_client *client,
-    wl_resource *resource, wl_resource *output, uint32_t id)
+static void zwf_shell_manager_get_wf_output(wl_client *client, wl_resource *resource, wl_resource *output,
+    uint32_t id)
 {
     auto wlr_out = (wlr_output*)wl_resource_get_user_data(output);
     auto wo = wf::get_core().output_layout->find_output(wlr_out);
@@ -541,10 +554,11 @@ static void zwf_shell_manager_get_wf_output(wl_client *client,
     }
 }
 
-static void zwf_shell_manager_get_wf_surface(wl_client *client,
-    wl_resource *resource, wl_resource *surface, uint32_t id)
+static void zwf_shell_manager_get_wf_surface(wl_client *client, wl_resource *resource, wl_resource *surface,
+    uint32_t id)
 {
     auto view = wf::wl_surface_to_wayfire_view(surface);
+
     if (view)
     {
         /* Will be freed when the resource is destroyed */
@@ -561,10 +575,9 @@ const struct zwf_shell_manager_v2_interface zwf_shell_manager_v2_impl =
 void bind_zwf_shell_manager(wl_client *client, void *data,
     uint32_t version, uint32_t id)
 {
-    auto resource =
-        wl_resource_create(client, &zwf_shell_manager_v2_interface, version, id);
-    wl_resource_set_implementation(resource,
-        &zwf_shell_manager_v2_impl, NULL, NULL);
+    auto resource = wl_resource_create(client, &zwf_shell_manager_v2_interface, version, id);
+
+    wl_resource_set_implementation(resource, &zwf_shell_manager_v2_impl, NULL, NULL);
 }
 
 struct wayfire_shell
@@ -576,8 +589,8 @@ wayfire_shell *wayfire_shell_create(wl_display *display)
 {
     wayfire_shell *ws = new wayfire_shell;
 
-    ws->shell_manager = wl_global_create(display,
-        &zwf_shell_manager_v2_interface, 3, NULL, bind_zwf_shell_manager);
+    ws->shell_manager = wl_global_create(display, &zwf_shell_manager_v2_interface, 3, NULL,
+        bind_zwf_shell_manager);
 
     if (ws->shell_manager == NULL)
     {

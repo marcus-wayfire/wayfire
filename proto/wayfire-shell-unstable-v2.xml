@@ -185,8 +185,8 @@
         Sent after an enter event and before the corresponding leave event,
         whenever the input pointer moves within the hotspot area.
 
-        Proximity indicates the current distance in pixels from the input pointer
-        to the trigger point of the hotspot:
+        Proximity is defined as the Euclidean distance in pixels from the input
+        pointer to the hotspot's trigger geometry, clamped to the threshold:
         - 0: Input pointer is exactly at the trigger point
         - threshold: Input pointer is at the outer edge of the hotspot radius
           (just entered the hotspot area)
@@ -207,7 +207,7 @@
         motion events to ensure smooth animations.
       </description>
 
-      <arg name="proximity" type="uint" summary="Distance in pixels from trigger point (0 = at trigger, threshold = at edge)"/>
+      <arg name="proximity" type="uint" summary="Shortest distance in pixels to trigger geometry (0 = at trigger, threshold = at edge)"/>
     </event>
   </interface>
 

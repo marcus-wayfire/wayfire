@@ -170,7 +170,7 @@ class wfs_hotspot
 
     void send_proximity_if_needed(const wf::point_t& cursor)
     {
-        if (wl_resource_get_version(hotspot_resource) < 2)
+        if (wl_resource_get_version(hotspot_resource) < ZWF_HOTSPOT_V2_PROXIMITY_CHANGED_SINCE_VERSION)
         {
             return;
         }
@@ -356,27 +356,9 @@ class wfs_output
     wf::geometry_t calculate_trigger_geometry(uint32_t edge_mask)
     {
         wf::geometry_t output_geom = this->output->get_layout_geometry();
-        int edge_count = 0;
 
-        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_TOP)
-        {
-            edge_count++;
-        }
-
-        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_BOTTOM)
-        {
-            edge_count++;
-        }
-
-        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_LEFT)
-        {
-            edge_count++;
-        }
-
-        if (edge_mask & ZWF_OUTPUT_V2_HOTSPOT_EDGE_RIGHT)
-        {
-            edge_count++;
-        }
+        // Count how many edge flags are set in the mask
+        int edge_count = __builtin_popcount(edge_mask);
 
         if (edge_count == 1)
         {
@@ -413,7 +395,7 @@ class wfs_output
             return {x, y, 0, 0};
         }
 
-        // Invalid
+        // Invalid (e.g., 0 edges, 3 edges, or all 4 edges set)
         return {0, 0, 0, 0};
     }
 

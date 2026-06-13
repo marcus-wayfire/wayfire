@@ -14,6 +14,11 @@
 
 #include "toplevel-common.hpp"
 
+extern "C"
+{
+#include <wlr/types/wlr_ext_foreign_toplevel_list_v1.h>
+}
+
 class wayfire_foreign_toplevel;
 using foreign_toplevel_map_type = std::map<wayfire_toplevel_view, std::unique_ptr<wayfire_foreign_toplevel>>;
 
@@ -129,6 +134,13 @@ class wayfire_ext_foreign_toplevel_protocol_impl : public wf::plugin_interface_t
 
         wf::get_core().connect(&on_view_mapped);
         wf::get_core().connect(&on_view_unmapped);
+
+        for (auto& view : wf::get_core().get_all_views())
+        {
+            wf::view_mapped_signal data{};
+            data.view = view;
+            on_view_mapped.emit(&data);
+        }
     }
 
     void fini() override
@@ -160,6 +172,7 @@ class wayfire_ext_foreign_toplevel_protocol_impl : public wf::plugin_interface_t
             }
 
             handle_for_view[toplevel] = std::make_unique<wayfire_ext_foreign_toplevel>(toplevel, handle);
+            handle->data = ev->view.get();
         }
     };
 
